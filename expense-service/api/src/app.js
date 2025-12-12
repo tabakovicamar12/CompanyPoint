@@ -1,31 +1,68 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const db = require('./db');
 
 const app = express();
-const port = process.env.PORT || 3001; // 3001, da se ne tepe z WorkHoursService
+const port = process.env.PORT || 3001;
 
-app.use(cors());
+// CORS (allow Authorization header)
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
-// Health check
+/**
+ * JWT middleware (Bearer token)
+ * Sets req.user = { id, role }
+ */
+const protect = (req, res, next) => {
+  let token;
+
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+
+  if (!token) {
+    return res.status(401).json({ error: 'Ni avtorizacije, ni žetona.' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // { id, role }
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Neveljaven žeton.' });
+  }
+};
+
+const requireAdmin = (req, res, next) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Dostop zavrnjen. Zahtevana je admin vloga.' });
+  }
+  next();
+};
+
+// Health check (public)
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+
+// Protect ALL /expenses routes
+app.use('/expenses', protect);
 
 //
 // ========================= WORKER ENDPOINTI =========================
 //
 
-// POST /expenses – zaposleni doda expense zase
+// POST /expenses – zaposleni doda expense zase (employeeId comes from token)
 app.post('/expenses', async (req, res) => {
   try {
-    const { employeeId, expenseDate, category, amount, description } = req.body;
+    const employeeId = req.user.id;
+    const { expenseDate, category, amount, description } = req.body;
 
-    if (!employeeId || !expenseDate || !category || amount == null) {
+    if (!expenseDate || !category || amount == null) {
       return res.status(400).json({
-        message: 'employeeId, expenseDate, category in amount so obvezni.',
+        message: 'expenseDate, category in amount so obvezni.',
       });
     }
 
@@ -43,14 +80,15 @@ app.post('/expenses', async (req, res) => {
   }
 });
 
-// POST /expenses/bulk – zaposleni doda več expensov naenkrat
+// POST /expenses/bulk – zaposleni doda več expensov naenkrat (employeeId from token)
 app.post('/expenses/bulk', async (req, res) => {
   try {
-    const { employeeId, expenses } = req.body;
+    const employeeId = req.user.id;
+    const { expenses } = req.body;
 
-    if (!employeeId || !Array.isArray(expenses) || expenses.length === 0) {
+    if (!Array.isArray(expenses) || expenses.length === 0) {
       return res.status(400).json({
-        message: 'employeeId in array expenses sta obvezna.',
+        message: 'Array expenses je obvezen.',
       });
     }
 
@@ -60,7 +98,7 @@ app.post('/expenses/bulk', async (req, res) => {
       const { expenseDate, category, amount, description } = exp;
 
       if (!expenseDate || !category || amount == null) {
-        continue; // lahko bi tudi vrgel error; tukaj samo skip
+        continue; // skip invalid rows
       }
 
       const result = await db.query(
@@ -80,14 +118,11 @@ app.post('/expenses/bulk', async (req, res) => {
   }
 });
 
-// GET /expenses/my – moji expensi (filter po datumu, kategoriji, znesku)
+// GET /expenses/my – moji expensi (employeeId from token)
 app.get('/expenses/my', async (req, res) => {
   try {
-    const { employeeId, from, to, category, minAmount, maxAmount } = req.query;
-
-    if (!employeeId) {
-      return res.status(400).json({ message: 'employeeId je obvezen query param.' });
-    }
+    const employeeId = req.user.id;
+    const { from, to, category, minAmount, maxAmount } = req.query;
 
     const conditions = ['employee_id = $1'];
     const params = [employeeId];
@@ -129,10 +164,11 @@ app.get('/expenses/my', async (req, res) => {
   }
 });
 
-// PUT /expenses/:id – zaposleni posodobi svoj expense
+// PUT /expenses/:id – zaposleni posodobi svoj expense (must own it)
 app.put('/expenses/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const employeeId = req.user.id;
     const { expenseDate, category, amount, description } = req.body;
 
     const result = await db.query(
@@ -142,13 +178,13 @@ app.put('/expenses/:id', async (req, res) => {
            amount        = COALESCE($3, amount),
            description   = COALESCE($4, description),
            updated_at    = NOW()
-       WHERE id = $5
+       WHERE id = $5 AND employee_id = $6
        RETURNING *`,
-      [expenseDate, category, amount, description, id]
+      [expenseDate, category, amount, description, id, employeeId]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Expense not found' });
+      return res.status(404).json({ message: 'Expense not found (ali ni tvoj).' });
     }
 
     res.json(result.rows[0]);
@@ -158,18 +194,19 @@ app.put('/expenses/:id', async (req, res) => {
   }
 });
 
-// DELETE /expenses/:id – zaposleni izbriše svoj expense
+// DELETE /expenses/:id – zaposleni izbriše svoj expense (must own it)
 app.delete('/expenses/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const employeeId = req.user.id;
 
     const result = await db.query(
-      'DELETE FROM expenses WHERE id = $1 RETURNING *',
-      [id]
+      'DELETE FROM expenses WHERE id = $1 AND employee_id = $2 RETURNING *',
+      [id, employeeId]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Expense not found' });
+      return res.status(404).json({ message: 'Expense not found (ali ni tvoj).' });
     }
 
     res.json({ message: 'Deleted', deleted: result.rows[0] });
@@ -184,7 +221,7 @@ app.delete('/expenses/:id', async (req, res) => {
 //
 
 // GET /expenses/admin/all – admin pregled vseh expensov z filtri
-app.get('/expenses/admin/all', async (req, res) => {
+app.get('/expenses/admin/all', requireAdmin, async (req, res) => {
   try {
     const { employeeId, from, to, category, minAmount, maxAmount } = req.query;
 
@@ -233,7 +270,7 @@ app.get('/expenses/admin/all', async (req, res) => {
 });
 
 // GET /expenses/admin/employee/:employeeId – admin view za enega zaposlenega
-app.get('/expenses/admin/employee/:employeeId', async (req, res) => {
+app.get('/expenses/admin/employee/:employeeId', requireAdmin, async (req, res) => {
   try {
     const { employeeId } = req.params;
     const { from, to } = req.query;
@@ -265,7 +302,7 @@ app.get('/expenses/admin/employee/:employeeId', async (req, res) => {
 });
 
 // POST /expenses/admin/createForEmployee – admin doda expense za uporabnika
-app.post('/expenses/admin/createForEmployee', async (req, res) => {
+app.post('/expenses/admin/createForEmployee', requireAdmin, async (req, res) => {
   try {
     const { employeeId, expenseDate, category, amount, description } = req.body;
 
@@ -290,7 +327,7 @@ app.post('/expenses/admin/createForEmployee', async (req, res) => {
 });
 
 // PUT /expenses/admin/update/:id – admin posodobi expense kogarkoli
-app.put('/expenses/admin/update/:id', async (req, res) => {
+app.put('/expenses/admin/update/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { employeeId, expenseDate, category, amount, description } = req.body;
@@ -320,7 +357,7 @@ app.put('/expenses/admin/update/:id', async (req, res) => {
 });
 
 // DELETE /expenses/admin/delete/:id – admin izbriše expense kogarkoli
-app.delete('/expenses/admin/delete/:id', async (req, res) => {
+app.delete('/expenses/admin/delete/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
