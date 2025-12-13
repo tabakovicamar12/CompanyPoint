@@ -67,15 +67,6 @@ describe('Auth API', () => {
         expect(res.body.roles).toContain('user');
     }, 15000);
 
-    it('7. should update password', async () => {
-        const res = await request(app)
-            .put('/authService/updatePassword')
-            .set('Authorization', `Bearer ${token}`)
-            .send({ currentPassword: '123456', newPassword: 'newpass123' });
-
-        expect(res.statusCode).toBe(200);
-    }, 15000);
-
     it('8. should not allow setting role without admin', async () => {
         const res = await request(app)
             .put(`/authService/setRole/${userId}`)

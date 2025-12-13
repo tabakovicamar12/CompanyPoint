@@ -2,8 +2,12 @@ import User from '../models/user.model.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
-const generateToken = (id, role) => {
-    return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+const generateToken = (user) => {
+    return jwt.sign({
+        sub: user._id,
+        name: user.name,
+        role: user.role
+    }, process.env.JWT_SECRET, {
         expiresIn: '1h',
     });
 };
@@ -44,9 +48,10 @@ export const registerUser = async (req, res) => {
         const user = new User({ email, password: hashedPassword, role });
         await user.save();
 
-        const token = generateToken(user._id, user.role);
+        user.name = user.email.split('@')[0];
+        const token = generateToken(user);
 
-        res.status(201).json({ message: 'Registracija uspešna.', user: { id: user._id, email: user.email, role: user.role }, token });
+        res.status(201).json({ message: 'Registracija uspešna.', user: { id: user._id, name: user.name, role: user.role }, token });
 
     } catch (error) {
         console.error('Napaka pri registraciji:', error);
@@ -64,8 +69,9 @@ export const loginUser = async (req, res) => {
     try {
         const user = await User.findOne({ email });
         if (user && (await bcrypt.compare(password, user.password))) {
-            const token = generateToken(user._id, user.role);
-            const userResponse = { id: user._id, email: user.email, role: user.role };
+            user.name = user.email.split('@')[0];
+            const token = generateToken(user);
+            const userResponse = { id: user._id, name: user.name, role: user.role };
 
             return res.status(200).json({ message: 'Prijava uspešna.', user: userResponse, token });
         } else {
