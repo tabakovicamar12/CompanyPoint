@@ -1,0 +1,26 @@
+services:
+  db:
+    image: zagrab/expense-db:1.0
+    container_name: expense-db
+    ports:
+      - "5433:5432"   # host:container
+    volumes:
+      - expense-data:/var/lib/postgresql/data
+
+  api:
+    image: zagrab/expense-api:1.0
+    container_name: expense-api
+    environment:
+      PORT: 3001
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: expenses_user
+      DB_PASSWORD: expenses_password
+      DB_NAME: expenses_db
+    depends_on:
+      - db
+    ports:
+      - "3001:3001"
+
+volumes:
+  expense-data:

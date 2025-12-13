@@ -1,0 +1,8 @@
+FROM postgres:16-alpine
+
+ENV POSTGRES_USER=workhours_user
+ENV POSTGRES_PASSWORD=workhours_password
+ENV POSTGRES_DB=workhours_db
+
+# vgradi shemo v image
+COPY init.sql /docker-entrypoint-initdb.d/init.sql

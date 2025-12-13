@@ -1,0 +1,346 @@
+{
+  "info": {
+    "name": "WorkHoursService",
+    "_postman_id": "f5a2c2d0-1234-4aab-9d11-zzzzzzzzzzzz",
+    "description": "Postman collection za testiranje WorkHoursService (worker + admin).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "workerWorkHourId",
+      "value": ""
+    },
+    {
+      "key": "adminWorkHourId",
+      "value": ""
+    },
+    {
+      "key": "employeeId",
+      "value": "1"
+    },
+    {
+      "key": "adminEmployeeId",
+      "value": "2"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/health"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has status ok', function () {",
+              "  var json = pm.response.json();",
+              "  pm.expect(json.status).to.eql('ok');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Worker – Log work hours (POST /workHours/log)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeId\": 1,\n  \"taskId\": 10,\n  \"workDate\": \"2025-02-01\",\n  \"hours\": 4.5,\n  \"workType\": \"regular\",\n  \"description\": \"Test work hours - worker\"\n}"
+        },
+        "url": "{{baseUrl}}/workHours/log"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('Has id field', function () {",
+              "  pm.expect(json).to.have.property('id');",
+              "});",
+              "",
+              "// Shrani workerWorkHourId in employeeId za naslednje requeste",
+              "pm.environment.set('workerWorkHourId', json.id);",
+              "pm.environment.set('employeeId', json.employee_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Worker – My work hours (GET /workHours/my)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/workHours/my?employeeId={{employeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('Response is array', function () {",
+              "  pm.expect(json).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Contains at least one entry', function () {",
+              "  pm.expect(json.length).to.be.above(0);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Worker – Update work entry (PUT /workHours/update/:id)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"hours\": 5.0,\n  \"description\": \"Updated by worker\"\n}"
+        },
+        "url": "{{baseUrl}}/workHours/update/{{workerWorkHourId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('Updated id matches', function () {",
+              "  pm.expect(json.id).to.eql(parseInt(pm.environment.get('workerWorkHourId')));",
+              "});",
+              "",
+              "pm.test('Hours updated to 5.0', function () {",
+              "  pm.expect(parseFloat(json.hours)).to.eql(5.0);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Worker – Delete work entry (DELETE /workHours/delete/:id)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/workHours/delete/{{workerWorkHourId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('Deleted object has same id', function () {",
+              "  pm.expect(json.deleted.id).to.eql(parseInt(pm.environment.get('workerWorkHourId')));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Admin – Log for employee (POST /workHours/admin/logForEmployee)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeId\": 2,\n  \"taskId\": 99,\n  \"workDate\": \"2025-02-02\",\n  \"hours\": 3,\n  \"workType\": \"overtime\",\n  \"description\": \"Admin vnos za zaposlenega\"\n}"
+        },
+        "url": "{{baseUrl}}/workHours/admin/logForEmployee"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('Has id field', function () {",
+              "  pm.expect(json).to.have.property('id');",
+              "});",
+              "",
+              "pm.environment.set('adminWorkHourId', json.id);",
+              "pm.environment.set('adminEmployeeId', json.employee_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Admin – Get all work hours (GET /workHours/all)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/workHours/all"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Response is array', function () {",
+              "  pm.expect(json).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Admin – Get employee work hours (GET /workHours/admin/employee/:employeeId)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/workHours/admin/employee/{{adminEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('Response is array', function () {",
+              "  pm.expect(json).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Admin – Update work entry (PUT /workHours/admin/update/:id)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"hours\": 6.5,\n  \"description\": \"Updated by admin\"\n}"
+        },
+        "url": "{{baseUrl}}/workHours/admin/update/{{adminWorkHourId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('Updated id matches adminWorkHourId', function () {",
+              "  pm.expect(json.id).to.eql(parseInt(pm.environment.get('adminWorkHourId')));",
+              "});",
+              "",
+              "pm.test('Hours updated to 6.5', function () {",
+              "  pm.expect(parseFloat(json.hours)).to.eql(6.5);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Admin – Delete work entry (DELETE /workHours/admin/delete/:id)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrl}}/workHours/admin/delete/{{adminWorkHourId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('Deleted id matches adminWorkHourId', function () {",
+              "  pm.expect(json.deleted.id).to.eql(parseInt(pm.environment.get('adminWorkHourId')));",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
