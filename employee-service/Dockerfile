@@ -1,19 +1,15 @@
-# Runtime
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS base
-WORKDIR /app
-EXPOSE 8080
-
-# Build
 FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 WORKDIR /src
 
-COPY . .
+COPY EmployeeService.csproj .
 RUN dotnet restore EmployeeService.csproj
+
+COPY . .
 RUN dotnet publish EmployeeService.csproj -c Release -o /app/publish /p:UseAppHost=false
 
-# Final
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine
 WORKDIR /app
 COPY --from=build /app/publish .
-ENV ASPNETCORE_URLS=http://+:8080
+
+EXPOSE 8080
 ENTRYPOINT ["dotnet", "EmployeeService.dll"]

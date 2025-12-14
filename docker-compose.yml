@@ -84,7 +84,37 @@ services:
     ports:
       - "3002:3002"
 
+  employee-db:
+    image: postgres:16-alpine
+    container_name: employee-db
+    environment:
+      POSTGRES_USER: employee_user
+      POSTGRES_PASSWORD: employee_pass
+      POSTGRES_DB: EmployeeDB
+    ports:
+      - "5434:5432"
+    volumes:
+      - employee-data:/var/lib/postgresql/data
+
+  employeeservice:
+    build:
+      context: ./employee-service
+    container_name: employeeservice
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__EmployeeDb: Host=employee-db;Port=5432;Database=EmployeeDB;Username=employee_user;Password=employee_pass
+      JWT_SECRET: secretkey123
+    depends_on:
+      - employee-db
+      - auth-api
+    ports:
+      - "5001:8080"
+
+
 volumes:
   auth_data:
   expense-data:
   workhours-data:
+  employee-data:

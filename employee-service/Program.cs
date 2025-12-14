@@ -1,20 +1,86 @@
 using System;
+using System.Text;
 using System.Threading;
 using EmployeeService.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 builder.Services.AddDbContext<EmployeeDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("EmployeeDb")));
 
+
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
+Console.WriteLine($"[EmployeeService] JWT_SECRET loaded: {(string.IsNullOrEmpty(jwtSecret) ? "NO" : "YES")} len={(jwtSecret?.Length ?? 0)}");
+
+if (string.IsNullOrEmpty(jwtSecret))
+{
+    throw new InvalidOperationException("JWT_SECRET ni nastavljen (mora biti isti kot v auth-service).");
+}
+
+var key = Encoding.UTF8.GetBytes(jwtSecret);
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+
+            
+            ValidateIssuer = false,
+            ValidateAudience = false,
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+
+            
+            NameClaimType = "name",
+            RoleClaimType = "role"
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 
 var app = builder.Build();
 
-// Èakanje na bazo + migracija
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<EmployeeDbContext>();
@@ -48,13 +114,14 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Swagger vedno, brez if
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// brez HTTPS preusmeritve
-// app.UseHttpsRedirection();
 
+
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 app.Run();
