@@ -1,6 +1,6 @@
 services:
   auth-db:
-    image: mongo:6.0-alpine
+    image: mongo:6.0
     container_name: auth-mongo-db
     restart: always
     environment:
@@ -27,7 +27,7 @@ services:
     command: ["npm", "start"]
 
   expense-db:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: expense-db
     environment:
       POSTGRES_USER: expenses_user
@@ -56,7 +56,7 @@ services:
       - "3001:3001"
 
   workhours-db:
-    image: postgres:15-alpine
+    image: postgres:15
     container_name: workhours-db
     environment:
       POSTGRES_USER: workhours_user
