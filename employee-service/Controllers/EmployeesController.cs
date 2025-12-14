@@ -2,10 +2,12 @@ using EmployeeService.Data;
 using EmployeeService.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EmployeeService.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("employeeService/[controller]")]
 public class EmployeesController : ControllerBase
 {
