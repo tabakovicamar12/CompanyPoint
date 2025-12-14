@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:15
+    container_name: workhours-db
+    environment:
+      POSTGRES_USER: workhours_user
+      POSTGRES_PASSWORD: workhours_password
+      POSTGRES_DB: workhours_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - workhours-data:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d
+
+  api:
+    build: ./api
+    container_name: workhours-api
+    environment:
+      PORT: 3002
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: workhours_user
+      DB_PASSWORD: workhours_password
+      DB_NAME: workhours_db
+      JWT_SECRET: secretkey123
+    depends_on:
+      - db
+    ports:
+      - "3002:3002"
+
+volumes:
+  workhours-data:

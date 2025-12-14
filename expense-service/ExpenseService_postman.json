@@ -1,0 +1,365 @@
+{
+  "info": {
+    "name": "ExpenseService",
+    "_postman_id": "f5a2c2d0-expense-4aab-9d11-xxxxxxxxxxxx",
+    "description": "Postman collection za testiranje ExpenseService (worker + admin).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrlExpense",
+      "value": "http://localhost:3001"
+    },
+    {
+      "key": "workerExpenseId",
+      "value": ""
+    },
+    {
+      "key": "adminExpenseId",
+      "value": ""
+    },
+    {
+      "key": "workerEmployeeId",
+      "value": "1"
+    },
+    {
+      "key": "adminEmployeeId",
+      "value": "2"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health (GET /health)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrlExpense}}/health"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('Status is ok', function () {",
+              "  pm.expect(json.status).to.eql('ok');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Worker – Create expense (POST /expenses)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeId\": 1,\n  \"expenseDate\": \"2025-02-01\",\n  \"category\": \"meal\",\n  \"amount\": 8.5,\n  \"description\": \"Malica - worker\"\n}"
+        },
+        "url": "{{baseUrlExpense}}/expenses"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "var json = pm.response.json();",
+              "pm.test('Response has id', function () {",
+              "  pm.expect(json).to.have.property('id');",
+              "});",
+              "",
+              "pm.environment.set('workerExpenseId', json.id);",
+              "pm.environment.set('workerEmployeeId', json.employee_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Worker – Bulk create expenses (POST /expenses/bulk)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeId\": 1,\n  \"expenses\": [\n    {\n      \"expenseDate\": \"2025-02-02\",\n      \"category\": \"commute\",\n      \"amount\": 3.2,\n      \"description\": \"Bus karta\"\n    },\n    {\n      \"expenseDate\": \"2025-02-03\",\n      \"category\": \"office\",\n      \"amount\": 12,\n      \"description\": \"Pisarniški material\"\n    }\n  ]\n}"
+        },
+        "url": "{{baseUrlExpense}}/expenses/bulk"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Response is array', function () {",
+              "  pm.expect(json).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Worker – My expenses (GET /expenses/my)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrlExpense}}/expenses/my?employeeId={{workerEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Response is array', function () {",
+              "  pm.expect(json).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Worker – Update expense (PUT /expenses/:id)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 9.0,\n  \"description\": \"Malica - worker updated\"\n}"
+        },
+        "url": "{{baseUrlExpense}}/expenses/{{workerExpenseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('ID matches workerExpenseId', function () {",
+              "  pm.expect(json.id).to.eql(parseInt(pm.environment.get('workerExpenseId')));",
+              "});",
+              "pm.test('Amount updated to 9.0', function () {",
+              "  pm.expect(parseFloat(json.amount)).to.eql(9.0);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Worker – Delete expense (DELETE /expenses/:id)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrlExpense}}/expenses/{{workerExpenseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Deleted id matches workerExpenseId', function () {",
+              "  pm.expect(json.deleted.id).to.eql(parseInt(pm.environment.get('workerExpenseId')));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Admin – Create expense for employee (POST /expenses/admin/createForEmployee)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"employeeId\": 2,\n  \"expenseDate\": \"2025-02-05\",\n  \"category\": \"commute\",\n  \"amount\": 4.0,\n  \"description\": \"Admin vnos za zaposlenega\"\n}"
+        },
+        "url": "{{baseUrlExpense}}/expenses/admin/createForEmployee"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Response has id', function () {",
+              "  pm.expect(json).to.have.property('id');",
+              "});",
+              "pm.environment.set('adminExpenseId', json.id);",
+              "pm.environment.set('adminEmployeeId', json.employee_id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Admin – Get all expenses (GET /expenses/admin/all)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrlExpense}}/expenses/admin/all"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Response is array', function () {",
+              "  pm.expect(json).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Admin – Get employee expenses (GET /expenses/admin/employee/:employeeId)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrlExpense}}/expenses/admin/employee/{{adminEmployeeId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Response is array', function () {",
+              "  pm.expect(json).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. Admin – Update expense (PUT /expenses/admin/update/:id)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"amount\": 5.5,\n  \"description\": \"Admin updated expense\"\n}"
+        },
+        "url": "{{baseUrlExpense}}/expenses/admin/update/{{adminExpenseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Updated id matches adminExpenseId', function () {",
+              "  pm.expect(json.id).to.eql(parseInt(pm.environment.get('adminExpenseId')));",
+              "});",
+              "pm.test('Amount updated to 5.5', function () {",
+              "  pm.expect(parseFloat(json.amount)).to.eql(5.5);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11. Admin – Delete expense (DELETE /expenses/admin/delete/:id)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": "{{baseUrlExpense}}/expenses/admin/delete/{{adminExpenseId}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "var json = pm.response.json();",
+              "pm.test('Deleted id matches adminExpenseId', function () {",
+              "  pm.expect(json.deleted.id).to.eql(parseInt(pm.environment.get('adminExpenseId')));",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

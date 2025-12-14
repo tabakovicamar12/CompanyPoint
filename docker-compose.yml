@@ -1,0 +1,90 @@
+services:
+  auth-db:
+    image: mongo:6.0-alpine
+    container_name: auth-mongo-db
+    restart: always
+    environment:
+      MONGO_INITDB_DATABASE: authdb
+      MONGO_INITDB_ROOT_USERNAME: auth_user
+      MONGO_INITDB_ROOT_PASSWORD: authcompnypoint1
+    ports:
+      - "27017:27017"
+    volumes:
+      - auth_data:/data/db
+
+  auth-api:
+    build:
+      context: ./auth-service
+    container_name: auth-service-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      MONGO_URI: mongodb://auth_user:authcompnypoint1@auth-db:27017/authdb?authSource=admin
+      JWT_SECRET: secretkey123
+    depends_on:
+      - auth-db
+    command: ["npm", "start"]
+
+  expense-db:
+    image: postgres:15-alpine
+    container_name: expense-db
+    environment:
+      POSTGRES_USER: expenses_user
+      POSTGRES_PASSWORD: expenses_password
+      POSTGRES_DB: expenses_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - expense-data:/var/lib/postgresql/data
+      - ./expense-service/db:/docker-entrypoint-initdb.d
+
+  expense-api:
+    build: ./expense-service/api
+    container_name: expense-api
+    environment:
+      PORT: 3001
+      DB_HOST: expense-db
+      DB_PORT: 5432
+      DB_USER: expenses_user
+      DB_PASSWORD: expenses_password
+      DB_NAME: expenses_db
+      JWT_SECRET: secretkey123
+    depends_on:
+      - expense-db
+    ports:
+      - "3001:3001"
+
+  workhours-db:
+    image: postgres:15-alpine
+    container_name: workhours-db
+    environment:
+      POSTGRES_USER: workhours_user
+      POSTGRES_PASSWORD: workhours_password
+      POSTGRES_DB: workhours_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - workhours-data:/var/lib/postgresql/data
+      - ./work-hours-service/db:/docker-entrypoint-initdb.d
+
+  workhours-api:
+    build: ./work-hours-service/api
+    container_name: workhours-api
+    environment:
+      PORT: 3002
+      DB_HOST: workhours-db
+      DB_PORT: 5432
+      DB_USER: workhours_user
+      DB_PASSWORD: workhours_password
+      DB_NAME: workhours_db
+      JWT_SECRET: secretkey123
+    depends_on:
+      - workhours-db
+    ports:
+      - "3002:3002"
+
+volumes:
+  auth_data:
+  expense-data:
+  workhours-data:
