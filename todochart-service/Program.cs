@@ -1,28 +1,92 @@
-using System;
-using System.Threading;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using ToDoChartService.Data;
+using ToDoChartService.Logging;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 builder.Services.AddDbContext<ToDoDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("ToDoDb")));
 
+
+var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
+
+if (string.IsNullOrEmpty(jwtSecret))
+{
+    throw new InvalidOperationException("JWT_SECRET ni nastavljen");
+}
+
+var key = Encoding.UTF8.GetBytes(jwtSecret);
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(key),
+
+            ValidateIssuer = false,
+            ValidateAudience = false,
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+
+            NameClaimType = "name",
+            RoleClaimType = "role"
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+
+builder.Services.AddSingleton<RabbitMqLogPublisher>();
+
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Vnesi: Bearer {JWT token}"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 var app = builder.Build();
 
-// Èakanje na bazo + migracija
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ToDoDbContext>();
 
     var retries = 0;
-    var maxRetries = 10;
-    var delay = TimeSpan.FromSeconds(3);
-
     while (true)
     {
         try
@@ -32,29 +96,24 @@ using (var scope = app.Services.CreateScope())
             Console.WriteLine("[ToDoChartService] DB migrate OK");
             break;
         }
-        catch (Exception ex)
+        catch
         {
             retries++;
-            Console.WriteLine($"[ToDoChartService] DB not ready (attempt {retries}/{maxRetries}): {ex.Message}");
-
-            if (retries >= maxRetries)
-            {
-                Console.WriteLine("[ToDoChartService] Giving up on DB migrate.");
-                throw;
-            }
-
-            Thread.Sleep(delay);
+            if (retries >= 10) throw;
+            Thread.Sleep(TimeSpan.FromSeconds(3));
         }
     }
 }
 
-// Swagger vedno, brez if
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// brez HTTPS preusmeritve
-// app.UseHttpsRedirection();
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
 
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 app.Run();

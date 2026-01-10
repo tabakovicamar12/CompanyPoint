@@ -172,9 +172,11 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__ToDoDb: Host=todo-db;Port=5432;Database=ToDoDB;Username=todo_user;Password=todo_pass
       JWT_SECRET: thIsismysup€rsafes3cretkey123!
+      RABBITMQ_HOST: rabbitmq
     depends_on:
       - todo-db
       - auth-api
+      - rabbitmq
     ports:
       - "5003:8080"
 

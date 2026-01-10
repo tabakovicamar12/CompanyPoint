@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ToDoChartService")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+148cbb9e7bb6b157a83ecbe03735cb759ccd9c11")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+911a0dcb2c7c1f64cd140a80907a4e3ff9bd2e21")]
 [assembly: System.Reflection.AssemblyProductAttribute("ToDoChartService")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ToDoChartService")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ToDoChartService.Data;
 using ToDoChartService.Models;
@@ -7,6 +8,7 @@ namespace ToDoChartService.Controllers;
 
 [ApiController]
 [Route("toDoChartService/[controller]")]
+[Authorize] 
 public class TasksController : ControllerBase
 {
     private readonly ToDoDbContext _context;
@@ -38,7 +40,7 @@ public class TasksController : ControllerBase
 
     // POST toDoChartService/todoLists
     [HttpPost("/toDoChartService/todoLists")]
-    public async Task<ActionResult<TodoList>> CreateTodoList(CreateTodoListDto dto)
+    public async Task<ActionResult<TodoList>> CreateTodoList([FromBody] CreateTodoListDto dto)
     {
         var list = new TodoList
         {
@@ -55,7 +57,7 @@ public class TasksController : ControllerBase
 
     // POST toDoChartService/tasks
     [HttpPost]
-    public async Task<ActionResult<TaskItem>> CreateTask(CreateTaskDto dto)
+    public async Task<ActionResult<TaskItem>> CreateTask([FromBody] CreateTaskDto dto)
     {
         var task = new TaskItem
         {
@@ -76,7 +78,7 @@ public class TasksController : ControllerBase
 
     // PUT toDoChartService/tasks/{taskId}
     [HttpPut("{taskId:int}")]
-    public async Task<ActionResult> UpdateTask(int taskId, UpdateTaskDto dto)
+    public async Task<ActionResult> UpdateTask(int taskId, [FromBody] UpdateTaskDto dto)
     {
         var task = await _context.Tasks.FindAsync(taskId);
         if (task == null) return NotFound();
