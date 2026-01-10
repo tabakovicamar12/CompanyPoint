@@ -3,6 +3,7 @@ using EmployeeService.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using EmployeeService.Logging;
 
 namespace EmployeeService.Controllers;
 
@@ -13,15 +14,32 @@ public class EmployeesController : ControllerBase
 {
     private readonly EmployeeDbContext _context;
 
-    public EmployeesController(EmployeeDbContext context)
+    private readonly RabbitMqLogPublisher _log;
+
+    public EmployeesController(EmployeeDbContext context, RabbitMqLogPublisher log)
     {
         _context = context;
+        _log = log;
     }
 
     // GET  employeeService/employees
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Employee>>> GetAll()
     {
+
+        var cid = HttpContext.Items["X-Correlation-Id"]?.ToString();
+
+        _log.Publish(new
+        {
+            timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss,fff"),
+            level = "INFO",
+            url = $"{Request.Scheme}://{Request.Host}{Request.Path}",
+            correlationId = cid,
+            service = "EmployeeService",
+            message = "GET employees"
+        });
+
+
         var employees = await _context.Employees.ToListAsync();
         return Ok(employees);
     }

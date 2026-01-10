@@ -111,6 +111,7 @@ services:
     depends_on:
       - employee-db
       - auth-api
+      - rabbitmq
     ports:
       - "5001:8080"
 
@@ -176,6 +177,13 @@ services:
       - auth-api
     ports:
       - "5003:8080"
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
     
 
 

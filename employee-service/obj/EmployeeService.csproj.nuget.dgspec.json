@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Aljaž\\Desktop\\SUA\\projekt\\pull\\CompanyPoint\\employee-service\\EmployeeService.csproj": {}
+    "C:\\Users\\Aljaž\\Desktop\\SUA\\ProjektFinal\\employee-service\\EmployeeService.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Aljaž\\Desktop\\SUA\\projekt\\pull\\CompanyPoint\\employee-service\\EmployeeService.csproj": {
+    "C:\\Users\\Aljaž\\Desktop\\SUA\\ProjektFinal\\employee-service\\EmployeeService.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Aljaž\\Desktop\\SUA\\projekt\\pull\\CompanyPoint\\employee-service\\EmployeeService.csproj",
+        "projectUniqueName": "C:\\Users\\Aljaž\\Desktop\\SUA\\ProjektFinal\\employee-service\\EmployeeService.csproj",
         "projectName": "EmployeeService",
-        "projectPath": "C:\\Users\\Aljaž\\Desktop\\SUA\\projekt\\pull\\CompanyPoint\\employee-service\\EmployeeService.csproj",
+        "projectPath": "C:\\Users\\Aljaž\\Desktop\\SUA\\ProjektFinal\\employee-service\\EmployeeService.csproj",
         "packagesPath": "C:\\Users\\Aljaž\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Aljaž\\Desktop\\SUA\\projekt\\pull\\CompanyPoint\\employee-service\\obj\\",
+        "outputPath": "C:\\Users\\Aljaž\\Desktop\\SUA\\ProjektFinal\\employee-service\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -71,6 +71,10 @@
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",
               "version": "[8.0.0, )"
+            },
+            "RabbitMQ.Client": {
+              "target": "Package",
+              "version": "[6.8.1, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",

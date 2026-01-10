@@ -5,13 +5,17 @@ using EmployeeService.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using EmployeeService.Logging;
+using EmployeeService.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton<RabbitMqLogPublisher>();
 
 builder.Services.AddDbContext<EmployeeDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("EmployeeDb")));
 
+builder.Services.AddSingleton<EmployeeService.Logging.RabbitMqLogPublisher>();
 
 var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
 Console.WriteLine($"[EmployeeService] JWT_SECRET loaded: {(string.IsNullOrEmpty(jwtSecret) ? "NO" : "YES")} len={(jwtSecret?.Length ?? 0)}");
@@ -80,6 +84,42 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+app.Use(async (context, next) =>
+{
+    var correlationId = context.Response.Headers["X-Correlation-Id"].FirstOrDefault()
+                        ?? context.TraceIdentifier;
+
+    try
+    {
+        await next();
+    }
+    finally
+    {
+        try
+        {
+            var publisher = context.RequestServices.GetRequiredService<EmployeeService.Logging.RabbitMqLogPublisher>();
+
+            publisher.Publish(new
+            {
+                timestamp = DateTime.UtcNow,
+                level = context.Response.StatusCode >= 500 ? "ERROR"
+                      : context.Response.StatusCode >= 400 ? "WARN"
+                      : "INFO",
+                url = $"{context.Request.Method} {context.Request.Path}",
+                correlationId = correlationId,
+                service = "EmployeeService",
+                statusCode = context.Response.StatusCode
+            });
+        }
+        catch
+        {
+            // namenoma ignoriraj, da logging ne sesuje requesta
+        }
+    }
+});
+
+
+app.UseMiddleware<CorrelationIdMiddleware>();
 
 using (var scope = app.Services.CreateScope())
 {
