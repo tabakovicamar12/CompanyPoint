@@ -114,10 +114,46 @@ services:
     ports:
       - "5001:8080"
 
+  holiday-db:
+    image: postgres:15-alpine
+    container_name: holiday-db
+    environment:
+      POSTGRES_USER: holiday_user
+      POSTGRES_PASSWORD: holiday_pass
+      POSTGRES_DB: holiday_service
+    ports:
+      - "5435:5432"
+    volumes:
+      - holiday-data:/var/lib/postgresql/data
+
+  holiday-service:
+    build:
+      context: ./HolidayService
+    container_name: holiday-service
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 5004
+      DB_HOST: holiday-db
+      DB_PORT: 5432
+      DB_USERNAME: holiday_user
+      DB_PASSWORD: holiday_pass
+      DB_DATABASE: holiday_service
+      DB_SYNC: "true"
+      JWT_SECRET: thIsismysup€rsafes3cretkey123!
+      AUTH_SERVICE_URL: http://auth-api:3000
+      TODOCHART_SERVICE_URL: http://todochart-service:5003
+    depends_on:
+      - holiday-db
+      - auth-api
+    ports:
+      - "5004:5004"
+
 
 volumes:
   auth_data:
   expense-data:
   workhours-data:
   employee-data:
+  holiday-data:
  

@@ -1,0 +1,444 @@
+{
+  "info": {
+    "name": "Holiday Service API",
+    "description": "API for managing employee holiday requests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5004",
+      "type": "string"
+    },
+    {
+      "key": "authUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth Service",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"user\"\n}"
+            },
+            "url": {
+              "raw": "{{authUrl}}/authService/register",
+              "host": ["{{authUrl}}"],
+              "path": ["authService", "register"]
+            }
+          }
+        },
+        {
+          "name": "Register Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{authUrl}}/authService/register",
+              "host": ["{{authUrl}}"],
+              "path": ["authService", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"token\", jsonData.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{authUrl}}/authService/login",
+              "host": ["{{authUrl}}"],
+              "path": ["authService", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "User Endpoints",
+      "item": [
+        {
+          "name": "Create Holiday Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startDate\": \"2026-02-01\",\n  \"endDate\": \"2026-02-05\",\n  \"reason\": \"Family vacation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/requests",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "requests"]
+            }
+          }
+        },
+        {
+          "name": "Get My Holiday Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/requests?status=all",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "requests"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all",
+                  "description": "pending, approved, rejected, or all"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/requests?status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "requests"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Holiday Request by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/requests/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "requests", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "request-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Holiday Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startDate\": \"2026-02-02\",\n  \"endDate\": \"2026-02-06\",\n  \"reason\": \"Updated vacation dates\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/requests/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "requests", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "request-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Holiday Request",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/requests/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "requests", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "request-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/requests/stats/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "requests", "stats", "me"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Endpoints",
+      "item": [
+        {
+          "name": "Get All Holiday Requests",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/admin/requests?status=all",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "admin", "requests"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all",
+                  "description": "pending, approved, rejected, or all"
+                },
+                {
+                  "key": "userId",
+                  "value": "",
+                  "description": "Filter by user ID",
+                  "disabled": true
+                },
+                {
+                  "key": "startDate",
+                  "value": "",
+                  "description": "Filter by start date",
+                  "disabled": true
+                },
+                {
+                  "key": "endDate",
+                  "value": "",
+                  "description": "Filter by end date",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Holiday Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"approved\",\n  \"reviewComment\": \"Approved for excellent performance\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/admin/requests/:id/review",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "admin", "requests", ":id", "review"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "request-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Reject Holiday Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"rejected\",\n  \"reviewComment\": \"Not enough vacation days remaining\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/admin/requests/:id/review",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "admin", "requests", ":id", "review"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "request-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Holiday Request (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/admin/requests/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "admin", "requests", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "request-id-here"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Statistics (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/holidayService/admin/stats/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["holidayService", "admin", "stats", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "user-id-here"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
