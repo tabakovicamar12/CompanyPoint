@@ -114,42 +114,10 @@ services:
     ports:
       - "5001:8080"
 
-  holiday-db:
-    image: postgres:16-alpine
-    container_name: holiday-db
-    environment:
-      POSTGRES_USER: holiday_user
-      POSTGRES_PASSWORD: holiday_pass
-      POSTGRES_DB: HolidayDB
-    ports:
-      - "5435:5432"
-    volumes:
-      - holiday-data:/var/lib/postgresql/data
-
-  holidayservice:
-    build:
-      context: .
-      dockerfile: HolidayService/HolidayService/Dockerfile
-    container_name: holidayservice
-    restart: always
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:8080
-      Database__UserId: holiday_user
-      Database__Password: holiday_pass
-      Database__Host: holiday-db
-      Database__Port: 5432
-      Database__Database: HolidayDB
-      JWT_SECRET: thIsismysup€rsafes3cretkey123!
-    depends_on:
-      - holiday-db
-      - auth-api
-    ports:
-      - "5002:8080"
 
 volumes:
   auth_data:
   expense-data:
   workhours-data:
   employee-data:
-  holiday-data:
+ 
