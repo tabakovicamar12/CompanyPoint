@@ -149,6 +149,35 @@ services:
     ports:
       - "5004:5004"
 
+  todo-db:
+    image: postgres:16-alpine
+    container_name: todo-db
+    environment:
+      POSTGRES_USER: todo_user
+      POSTGRES_PASSWORD: todo_pass
+      POSTGRES_DB: ToDoDB
+    ports:
+      - "5436:5432"
+    volumes:
+      - todo-data:/var/lib/postgresql/data
+
+  todochart-service:
+    build:
+      context: ./todochart-service
+    container_name: todochart-service
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__ToDoDb: Host=todo-db;Port=5432;Database=ToDoDB;Username=todo_user;Password=todo_pass
+      JWT_SECRET: thIsismysup€rsafes3cretkey123!
+    depends_on:
+      - todo-db
+      - auth-api
+    ports:
+      - "5003:8080"
+    
+
 
 volumes:
   auth_data:
@@ -156,4 +185,5 @@ volumes:
   workhours-data:
   employee-data:
   holiday-data:
+  todo-data:
  
