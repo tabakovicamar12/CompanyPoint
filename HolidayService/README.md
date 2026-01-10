@@ -181,8 +181,6 @@ Authorization: Bearer <admin-token>
    - Only admins can delete non-pending requests
 
 
-## Integration with Other Services
-
 
 
 ## Database Schema
