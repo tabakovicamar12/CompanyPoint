@@ -2,11 +2,11 @@ using System;
 using System.Text;
 using System.Threading;
 using EmployeeService.Data;
+using EmployeeService.Logging;
+using EmployeeService.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using EmployeeService.Logging;
-using EmployeeService.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,8 +14,6 @@ builder.Services.AddSingleton<RabbitMqLogPublisher>();
 
 builder.Services.AddDbContext<EmployeeDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("EmployeeDb")));
-
-builder.Services.AddSingleton<EmployeeService.Logging.RabbitMqLogPublisher>();
 
 var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
 Console.WriteLine($"[EmployeeService] JWT_SECRET loaded: {(string.IsNullOrEmpty(jwtSecret) ? "NO" : "YES")} len={(jwtSecret?.Length ?? 0)}");
@@ -35,22 +33,16 @@ builder.Services
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(key),
-
-            
             ValidateIssuer = false,
             ValidateAudience = false,
-
             ValidateLifetime = true,
             ClockSkew = TimeSpan.FromMinutes(1),
-
-            
             NameClaimType = "name",
             RoleClaimType = "role"
         };
     });
 
 builder.Services.AddAuthorization();
-
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -81,13 +73,21 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseMiddleware<CorrelationIdMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Use(async (context, next) =>
 {
-    var correlationId = context.Response.Headers["X-Correlation-Id"].FirstOrDefault()
-                        ?? context.TraceIdentifier;
+    var correlationId =
+        context.Request.Headers["X-Correlation-Id"].FirstOrDefault()
+        ?? context.TraceIdentifier;
 
     try
     {
@@ -97,7 +97,7 @@ app.Use(async (context, next) =>
     {
         try
         {
-            var publisher = context.RequestServices.GetRequiredService<EmployeeService.Logging.RabbitMqLogPublisher>();
+            var publisher = context.RequestServices.GetRequiredService<RabbitMqLogPublisher>();
 
             publisher.Publish(new
             {
@@ -106,20 +106,16 @@ app.Use(async (context, next) =>
                       : context.Response.StatusCode >= 400 ? "WARN"
                       : "INFO",
                 url = $"{context.Request.Method} {context.Request.Path}",
-                correlationId = correlationId,
+                correlationId,
                 service = "EmployeeService",
                 statusCode = context.Response.StatusCode
             });
         }
         catch
         {
-            // namenoma ignoriraj, da logging ne sesuje requesta
         }
     }
 });
-
-
-app.UseMiddleware<CorrelationIdMiddleware>();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -145,7 +141,6 @@ using (var scope = app.Services.CreateScope())
 
             if (retries >= maxRetries)
             {
-                Console.WriteLine("[EmployeeService] Giving up on DB migrate.");
                 throw;
             }
 
@@ -153,15 +148,6 @@ using (var scope = app.Services.CreateScope())
         }
     }
 }
-
-
-app.UseSwagger();
-app.UseSwaggerUI();
-
-
-
-app.UseAuthentication();
-app.UseAuthorization();
 
 app.MapControllers();
 app.Run();

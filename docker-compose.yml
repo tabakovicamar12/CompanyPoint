@@ -113,7 +113,7 @@ services:
       - auth-api
       - rabbitmq
     ports:
-      - "5001:8080"
+      - "5007:8080"
 
   holiday-db:
     image: postgres:15-alpine
