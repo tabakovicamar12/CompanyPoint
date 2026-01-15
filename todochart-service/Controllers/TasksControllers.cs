@@ -55,26 +55,39 @@ public class TasksController : ControllerBase
         return CreatedAtAction(nameof(GetByEmployee), new { employeeId = list.EmployeeId }, list);
     }
 
-    // POST toDoChartService/tasks
-    [HttpPost]
-    public async Task<ActionResult<TaskItem>> CreateTask([FromBody] CreateTaskDto dto)
+[HttpPost]
+public async Task<ActionResult<TaskItem>> CreateTask([FromBody] CreateTaskDto dto)
+{
+    // 1) preveri obstoj liste
+    var list = await _context.TodoLists
+        .FirstOrDefaultAsync(l => l.Id == dto.TodoListId);
+
+    if (list == null)
+        return NotFound(new { message = $"TodoList {dto.TodoListId} not found." });
+
+    // 2) ustvari task in ga pripni na listo
+    var task = new TaskItem
     {
-        var task = new TaskItem
-        {
-            TodoListId = dto.TodoListId,
-            Title = dto.Title,
-            Description = dto.Description,
-            DueDate = dto.DueDate,
-            Status = "Pending",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        TodoListId = list.Id,     // FK
+        TodoList = list,          // navigacija (opcijsko, ampak jasno poveže)
+        Title = dto.Title,
+        Description = dto.Description,
+        DueDate = dto.DueDate,
+        Status = "Pending",
+        CreatedAt = DateTime.UtcNow,
+        UpdatedAt = DateTime.UtcNow
+    };
 
-        _context.Tasks.Add(task);
-        await _context.SaveChangesAsync();
+    _context.Tasks.Add(task);
+    await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetAll), new { }, task);
-    }
+    // 3) vrni lokacijo na GET byEmployee (ker task pripada zaposlenemu prek liste)
+    return CreatedAtAction(
+        nameof(GetByEmployee),
+        new { employeeId = list.EmployeeId },
+        task
+    );
+}
 
     // PUT toDoChartService/tasks/{taskId}
     [HttpPut("{taskId:int}")]
@@ -133,6 +146,33 @@ public class TasksController : ControllerBase
         await _context.SaveChangesAsync();
         return NoContent();
     }
+
+    // GET toDoChartService/todoLists
+    [HttpGet("/toDoChartService/todoLists")]
+    public async Task<ActionResult<IEnumerable<TodoList>>> GetAllTodoLists()
+    {
+        var lists = await _context.TodoLists
+            .Include(l => l.Tasks)
+            .ToListAsync();
+
+        return Ok(lists);
+    }
+
+    // GET toDoChartService/todoLists/{id}
+    [HttpGet("/toDoChartService/todoLists/{id:int}")]
+    public async Task<ActionResult<TodoList>> GetTodoListById(int id)
+    {
+        var list = await _context.TodoLists
+            .Include(l => l.Tasks)
+            .FirstOrDefaultAsync(l => l.Id == id);
+
+        if (list == null)
+            return NotFound();
+
+        return Ok(list);
+    }
+
+
 }
 
 public class CreateTodoListDto
