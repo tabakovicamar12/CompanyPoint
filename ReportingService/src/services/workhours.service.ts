@@ -34,7 +34,10 @@ export class WorkhoursService {
             });
             
             const entries: WorkhourEntry[] = response.data || [];
-            const totalHours = entries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
+            const totalHours = entries.reduce((sum, entry) => {
+                const hours = typeof entry.hours === 'string' ? parseFloat(entry.hours) : entry.hours;
+                return sum + (hours || 0);
+            }, 0);
             
             return {
                 userId,
