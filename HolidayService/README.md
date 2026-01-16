@@ -9,6 +9,8 @@ A microservice for managing employee holiday requests built with TypeScript, Exp
 - ✅ Admin approval/rejection workflow
 - 📊 Holiday statistics per user
 - 🔗 Integration with ToDoChart service (prevents holidays during pending tasks)
+- � **RabbitMQ Logging with Correlation ID tracking**
+- 🗄️ **Log management endpoints (fetch, query, delete)**
 - 🐳 Docker support
 
 ## Tech Stack
@@ -18,6 +20,7 @@ A microservice for managing employee holiday requests built with TypeScript, Exp
 - **TypeORM** - ORM for PostgreSQL (similar to Entity Framework)
 - **PostgreSQL** - Database
 - **JWT** - Authentication
+- **RabbitMQ** - Message broker for logging
 - **Docker** - Containerization
 
 ## Prerequisites
@@ -200,5 +203,111 @@ Authorization: Bearer <admin-token>
   reviewedAt: timestamp (optional)
   createdAt: timestamp
   updatedAt: timestamp
+}
+```
+
+### Log Entity
+```typescript
+{
+  id: UUID (primary key)
+  timestamp: timestamp (indexed)
+  logType: enum (INFO, ERROR, WARN)
+  url: string
+  correlationId: string (indexed)
+  serviceName: string
+  message: string
+  method: string (optional)
+  statusCode: number (optional)
+  userId: string (optional)
+  createdAt: timestamp
+}
+```
+
+## Logging System
+
+Storitev uporablja RabbitMQ za upravljanje logov z naslednjimi funkcionalnostmi:
+
+### Correlation ID
+- Vsak request dobi unikaten correlation ID (UUID)
+- Correlation ID se prenaša med mikrostoritvami preko X-Correlation-Id headerja
+- Omogoča sledljivost dogodkov preko večih storitev
+
+### Log Format
+```
+<timestamp> <LogType> <URL> <CorrelationId> <serviceName> - <Message>
+
+Primer:
+2026-01-16T10:30:45.123Z INFO http://localhost:5004/holidayService/requests Correlation: 550e8400-e29b-41d4-a716-446655440000 HolidayService - Incoming GET request
+```
+
+### Log Endpoints
+
+#### POST /logs
+Prenese vse loge iz RabbitMQ queue-ja in jih shrani v bazo podatkov.
+```bash
+curl -X POST http://localhost:5004/logs \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+Response:
+```json
+{
+  "message": "Logs fetched and saved successfully",
+  "count": 150,
+  "logs": [...]
+}
+```
+
+#### GET /logs/:dateFrom/:dateTo
+Pridobi vse loge med dvema datuma (format: YYYY-MM-DD).
+```bash
+curl -X GET http://localhost:5004/logs/2026-01-01/2026-01-31 \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+Response:
+```json
+{
+  "dateFrom": "2026-01-01T00:00:00.000Z",
+  "dateTo": "2026-01-31T23:59:59.999Z",
+  "count": 45,
+  "logs": [...]
+}
+```
+
+#### DELETE /logs
+Izbriše vse loge iz baze podatkov.
+```bash
+curl -X DELETE http://localhost:5004/logs \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+Response:
+```json
+{
+  "message": "All logs deleted successfully",
+  "deletedCount": 150
+}
+```
+
+#### GET /logs?logType=ERROR&limit=50
+Pridobi loge s filtriranjem (opcijsko).
+```bash
+curl -X GET "http://localhost:5004/logs?logType=ERROR&limit=50" \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+#### GET /logs/correlation/:correlationId
+Pridobi vse loge za določen correlation ID (za sledljivost).
+```bash
+curl -X GET http://localhost:5004/logs/correlation/550e8400-e29b-41d4-a716-446655440000 \
+  -H "Authorization: Bearer <jwt_token>"
+```
+
+### RabbitMQ Configuration
+- **Exchange**: `logs_exchange` (topic)
+- **Queue**: `holiday_service_logs`
+- **Routing Key**: `holiday.logs`
+- **Connection**: Konfigurirana preko Docker Compose
 }
 ```

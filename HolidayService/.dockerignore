@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+dist
+.env
+.git
+.gitignore
+README.md
+LOGGING_*.md
+QUICK_START.md
+HolidayService_postman.json
+setup.ps1
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode
+.idea

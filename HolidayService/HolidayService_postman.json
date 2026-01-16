@@ -439,6 +439,142 @@
           }
         }
       ]
+    },
+    {
+      "name": "Logs Management",
+      "item": [
+        {
+          "name": "Fetch Logs from RabbitMQ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["logs"]
+            },
+            "description": "Prenese vse loge iz RabbitMQ queue in jih shrani v bazo podatkov"
+          }
+        },
+        {
+          "name": "Get Logs by Date Range",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/logs/2026-01-01/2026-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["logs", "2026-01-01", "2026-12-31"],
+              "variable": [
+                {
+                  "key": "dateFrom",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "dateTo",
+                  "value": "2026-12-31"
+                }
+              ]
+            },
+            "description": "Pridobi vse loge med dvema datuma (format: YYYY-MM-DD)"
+          }
+        },
+        {
+          "name": "Delete All Logs",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["logs"]
+            },
+            "description": "Izbriše vse loge iz baze podatkov"
+          }
+        },
+        {
+          "name": "Get All Logs with Filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/logs?logType=INFO&limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["logs"],
+              "query": [
+                {
+                  "key": "logType",
+                  "value": "INFO",
+                  "description": "INFO, ERROR, ali WARN"
+                },
+                {
+                  "key": "correlationId",
+                  "value": "correlation-id-here",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "50",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Pridobi vse loge s filtriranjem (logType, correlationId, limit)"
+          }
+        },
+        {
+          "name": "Get Logs by Correlation ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/logs/correlation/550e8400-e29b-41d4-a716-446655440000",
+              "host": ["{{baseUrl}}"],
+              "path": ["logs", "correlation", "550e8400-e29b-41d4-a716-446655440000"],
+              "variable": [
+                {
+                  "key": "correlationId",
+                  "value": "550e8400-e29b-41d4-a716-446655440000"
+                }
+              ]
+            },
+            "description": "Pridobi vse loge za določen correlation ID (za sledljivost zahtevka)"
+          }
+        }
+      ]
     }
   ]
 }

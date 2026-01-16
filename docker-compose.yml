@@ -145,11 +145,13 @@ services:
       DB_SYNC: "true"
       JWT_SECRET: thIsismysup€rsafes3cretkey123!
       AUTH_SERVICE_URL: http://auth-api:3000
-      TODOCHART_SERVICE_URL: http://todochart-service:8080
+      TODOCHART_SERVICE_URL: http://todochart-service:5003
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
     depends_on:
       - holiday-db
       - auth-api
-      - todochart-service
+      - rabbitmq
     ports:
       - "5004:5004"
 
@@ -183,6 +185,44 @@ services:
     ports:
       - "5003:8080"
 
+  reporting-db:
+    image: postgres:15-alpine
+    container_name: reporting-db
+    environment:
+      POSTGRES_USER: reporting_user
+      POSTGRES_PASSWORD: reporting_pass
+      POSTGRES_DB: reporting_service
+    ports:
+      - "5437:5432"
+    volumes:
+      - reporting-data:/var/lib/postgresql/data
+
+  reporting-service:
+    build:
+      context: ./ReportingService
+    container_name: reporting-service
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 5008
+      DB_HOST: reporting-db
+      DB_PORT: 5432
+      DB_USERNAME: reporting_user
+      DB_PASSWORD: reporting_pass
+      DB_DATABASE: reporting_service
+      DB_SYNC: "true"
+      JWT_SECRET: thIsismysup€rsafes3cretkey123!
+      WORKHOURS_SERVICE_URL: http://workhours-api:3002
+      AUTH_SERVICE_URL: http://auth-api:3000
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+    depends_on:
+      - reporting-db
+      - rabbitmq
+      - auth-api
+    ports:
+      - "5008:5008"
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -197,3 +237,5 @@ volumes:
   employee-data:
   holiday-data:
   todo-data:
+  reporting-data:
+ 

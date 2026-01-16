@@ -5,13 +5,12 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ToDoChartService.Data;
 using ToDoChartService.Logging;
+using ToDoChartService.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Services.AddDbContext<ToDoDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("ToDoDb")));
-
 
 var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET");
 
@@ -44,9 +43,7 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-
 builder.Services.AddSingleton<RabbitMqLogPublisher>();
-
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -79,8 +76,22 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-var app = builder.Build();
+/* =======================
+   CORS – Angular localhost
+   ======================= */
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularLocalhost", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:4200", "https://localhost:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
+var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -105,9 +116,11 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-
 app.UseSwagger();
 app.UseSwaggerUI();
+
+
+app.UseCors("AllowAngularLocalhost");
 
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<RequestLoggingMiddleware>();
