@@ -23,6 +23,7 @@ services:
       DB_PASSWORD: workhours_password
       DB_NAME: workhours_db
       JWT_SECRET: secretkey123
+      TODOCHART_SERVICE_URL: http://todochart-service:8080
     depends_on:
       - db
     ports:

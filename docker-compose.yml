@@ -81,8 +81,10 @@ services:
       DB_PASSWORD: workhours_password
       DB_NAME: workhours_db
       JWT_SECRET: thIsismysup€rsafes3cretkey123!
+      TODOCHART_SERVICE_URL: http://todochart-service:8080
     depends_on:
       - workhours-db
+      - todochart-service
     ports:
       - "3002:3002"
 
@@ -143,10 +145,11 @@ services:
       DB_SYNC: "true"
       JWT_SECRET: thIsismysup€rsafes3cretkey123!
       AUTH_SERVICE_URL: http://auth-api:3000
-      TODOCHART_SERVICE_URL: http://todochart-service:5003
+      TODOCHART_SERVICE_URL: http://todochart-service:8080
     depends_on:
       - holiday-db
       - auth-api
+      - todochart-service
     ports:
       - "5004:5004"
 
@@ -186,8 +189,6 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
-    
-
 
 volumes:
   auth_data:
@@ -196,4 +197,3 @@ volumes:
   employee-data:
   holiday-data:
   todo-data:
- 
