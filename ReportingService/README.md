@@ -16,54 +16,7 @@ Microservice for generating and managing reports with RabbitMQ logging integrati
 - **Correlation ID tracking** — trace requests across services
 - **TypeORM with PostgreSQL** — persistent storage with migrations
 
-## Running Locally
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-2. **Run in development:**
-   ```bash
-   npm run dev
-   ```
-   Server runs on http://localhost:5008
-
-3. **Build and start production:**
-   ```bash
-   npm run build
-   npm start
-   ```
-
-## Database Setup
-
-1. **Migrations:**
-   ```bash
-   npm run migration:generate -- src/migrations/Initial
-   npm run migration:run
-   ```
-
-2. **With Docker Compose:**
-   - PostgreSQL runs on port 5437 (internal 5432)
-   - Auto-sync enabled via `DB_SYNC=true`
-
-## Environment Variables
-
-```
-NODE_ENV=production
-PORT=5008
-DB_HOST=reporting-db
-DB_PORT=5432
-DB_USERNAME=reporting_user
-DB_PASSWORD=reporting_pass
-DB_DATABASE=reporting_service
-DB_SYNC=true
-JWT_SECRET=thIsismysup€rsafes3cretkey123!
-WORKHOURS_SERVICE_URL=http://workhours-api:3002
-AUTH_SERVICE_URL=http://auth-api:3000
-RABBITMQ_HOST=rabbitmq
-RABBITMQ_PORT=5672
-```
 
 ## API Endpoints
 
