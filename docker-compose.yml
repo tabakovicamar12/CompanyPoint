@@ -144,9 +144,12 @@ services:
       JWT_SECRET: thIsismysup€rsafes3cretkey123!
       AUTH_SERVICE_URL: http://auth-api:3000
       TODOCHART_SERVICE_URL: http://todochart-service:5003
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
     depends_on:
       - holiday-db
       - auth-api
+      - rabbitmq
     ports:
       - "5004:5004"
 

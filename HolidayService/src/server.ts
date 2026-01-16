@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import * as dotenv from 'dotenv';
 import { AppDataSource } from './config/database';
+import { rabbitmqService } from './services/rabbitmq.service';
 import app from './app';
 
 dotenv.config();
@@ -12,6 +13,10 @@ async function startServer() {
         console.log('Initializing database connection...');
         await AppDataSource.initialize();
         console.log('✅ Database connected successfully');
+
+        console.log('Connecting to RabbitMQ...');
+        await rabbitmqService.connect();
+        console.log('✅ RabbitMQ connected successfully');
 
         app.listen(PORT, () => {
             console.log(`🚀 HolidayService is running on port ${PORT}`);
@@ -29,6 +34,7 @@ process.on('SIGTERM', async () => {
     if (AppDataSource.isInitialized) {
         await AppDataSource.destroy();
     }
+    await rabbitmqService.close();
     process.exit(0);
 });
 
@@ -37,6 +43,7 @@ process.on('SIGINT', async () => {
     if (AppDataSource.isInitialized) {
         await AppDataSource.destroy();
     }
+    await rabbitmqService.close();
     process.exit(0);
 });
 

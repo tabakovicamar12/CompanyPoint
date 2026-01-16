@@ -1,6 +1,7 @@
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 import { HolidayRequest } from '../entities/HolidayRequest';
+import { Log } from '../entities/Log';
 
 dotenv.config();
 
@@ -19,7 +20,7 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_DATABASE || 'holiday_service',
     synchronize,
     logging,
-    entities: [HolidayRequest],
+    entities: [HolidayRequest, Log],
     migrations: ['src/migrations/*.ts'],
     subscribers: [],
 });
