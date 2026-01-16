@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 require('dotenv').config();
 const db = require('./db');
 
@@ -12,11 +14,22 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 /**
+ * -------------------------
+ * Helpers
+ * -------------------------
+ */
+const normalizeUserId = (decoded) => decoded?.id ?? decoded?.sub;
+
+/**
+ * -------------------------
+ * Auth middleware
+ * -------------------------
  * JWT middleware (Bearer token)
- * Sets req.user = { id, role }
+ * Sets req.user = { id, role, name? }
  */
 const protect = (req, res, next) => {
   let token;
+
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     token = req.headers.authorization.split(' ')[1];
   }
@@ -27,17 +40,23 @@ const protect = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id: decoded.sub, role: decoded.role };
 
-    console.log('Decoded JWT in container:', decoded);
-    console.log('User role:', decoded.role);
+    const id = normalizeUserId(decoded);
+    if (!id) {
+      return res.status(401).json({ error: 'Neveljaven žeton (manjka id/sub).' });
+    }
+
+    req.user = {
+      ...decoded,
+      id, // normalized
+    };
+
     next();
   } catch (error) {
     console.log('Invalid token error:', error.message);
     return res.status(401).json({ error: 'Neveljaven žeton.' });
   }
 };
-
 
 const requireAdmin = (req, res, next) => {
   if (req.user?.role !== 'admin') {
@@ -46,7 +65,48 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-// Health check (public)
+/**
+ * -------------------------
+ * Swagger (OpenAPI)
+ * -------------------------
+ */
+const swaggerSpec = swaggerJsdoc({
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'ExpenseService API',
+      version: '1.0.0',
+      description:
+        'Expense mikroservis za beleženje stroškov. Zahteva JWT Bearer token. Worker endpointi so vezani na uporabnika iz JWT.',
+    },
+    servers: [{ url: 'http://localhost:3001' }],
+    components: {
+      securitySchemes: {
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      },
+    },
+  },
+  // Najbolj robustno: swagger-jsdoc pars-a komentarje iz trenutne datoteke
+  apis: [__filename],
+});
+
+app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+/**
+ * -------------------------
+ * Routes
+ * -------------------------
+ */
+
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     summary: Health check
+ *     responses:
+ *       200:
+ *         description: OK
+ */
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -58,7 +118,31 @@ app.use('/expenses', protect);
 // ========================= WORKER ENDPOINTI =========================
 //
 
-// POST /expenses – zaposleni doda expense zase (employeeId comes from token)
+/**
+ * @openapi
+ * /expenses:
+ *   post:
+ *     summary: Zaposleni doda expense zase (employeeId iz JWT)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [expenseDate, category, amount]
+ *             properties:
+ *               expenseDate: { type: string, format: date }
+ *               category: { type: string }
+ *               amount: { type: number }
+ *               description: { type: string, nullable: true }
+ *     responses:
+ *       201: { description: Created }
+ *       400: { description: Bad request }
+ *       401: { description: Unauthorized }
+ *       500: { description: Internal server error }
+ */
 app.post('/expenses', async (req, res) => {
   try {
     const employeeId = req.user.id;
@@ -84,7 +168,37 @@ app.post('/expenses', async (req, res) => {
   }
 });
 
-// POST /expenses/bulk – zaposleni doda več expensov naenkrat (employeeId from token)
+/**
+ * @openapi
+ * /expenses/bulk:
+ *   post:
+ *     summary: Zaposleni doda več expensov naenkrat (employeeId iz JWT)
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [expenses]
+ *             properties:
+ *               expenses:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [expenseDate, category, amount]
+ *                   properties:
+ *                     expenseDate: { type: string, format: date }
+ *                     category: { type: string }
+ *                     amount: { type: number }
+ *                     description: { type: string, nullable: true }
+ *     responses:
+ *       201: { description: Created }
+ *       400: { description: Bad request }
+ *       401: { description: Unauthorized }
+ *       500: { description: Internal server error }
+ */
 app.post('/expenses/bulk', async (req, res) => {
   try {
     const employeeId = req.user.id;
@@ -122,7 +236,34 @@ app.post('/expenses/bulk', async (req, res) => {
   }
 });
 
-// GET /expenses/my – moji expensi (employeeId from token)
+/**
+ * @openapi
+ * /expenses/my:
+ *   get:
+ *     summary: Moji expensi (employeeId iz JWT)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: from
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: to
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: category
+ *         schema: { type: string }
+ *       - in: query
+ *         name: minAmount
+ *         schema: { type: number }
+ *       - in: query
+ *         name: maxAmount
+ *         schema: { type: number }
+ *     responses:
+ *       200: { description: OK }
+ *       401: { description: Unauthorized }
+ *       500: { description: Internal server error }
+ */
 app.get('/expenses/my', async (req, res) => {
   try {
     const employeeId = req.user.id;
@@ -168,7 +309,35 @@ app.get('/expenses/my', async (req, res) => {
   }
 });
 
-// PUT /expenses/:id – zaposleni posodobi svoj expense (must own it)
+/**
+ * @openapi
+ * /expenses/{id}:
+ *   put:
+ *     summary: Zaposleni posodobi svoj expense (mora biti lastnik)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               expenseDate: { type: string, format: date, nullable: true }
+ *               category: { type: string, nullable: true }
+ *               amount: { type: number, nullable: true }
+ *               description: { type: string, nullable: true }
+ *     responses:
+ *       200: { description: OK }
+ *       401: { description: Unauthorized }
+ *       404: { description: Not found }
+ *       500: { description: Internal server error }
+ */
 app.put('/expenses/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -198,16 +367,33 @@ app.put('/expenses/:id', async (req, res) => {
   }
 });
 
-// DELETE /expenses/:id – zaposleni izbriše svoj expense (must own it)
+/**
+ * @openapi
+ * /expenses/{id}:
+ *   delete:
+ *     summary: Zaposleni izbriše svoj expense (mora biti lastnik)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: Deleted }
+ *       401: { description: Unauthorized }
+ *       404: { description: Not found }
+ *       500: { description: Internal server error }
+ */
 app.delete('/expenses/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const employeeId = req.user.id;
 
-    const result = await db.query(
-      'DELETE FROM expenses WHERE id = $1 AND employee_id = $2 RETURNING *',
-      [id, employeeId]
-    );
+    const result = await db.query('DELETE FROM expenses WHERE id = $1 AND employee_id = $2 RETURNING *', [
+      id,
+      employeeId,
+    ]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Expense not found (ali ni tvoj).' });
@@ -224,7 +410,38 @@ app.delete('/expenses/:id', async (req, res) => {
 // ========================= ADMIN ENDPOINTI =========================
 //
 
-// GET /expenses/admin/all – admin pregled vseh expensov z filtri
+/**
+ * @openapi
+ * /expenses/admin/all:
+ *   get:
+ *     summary: Admin pregled vseh expensov (filtri)
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: employeeId
+ *         schema: { type: string }
+ *       - in: query
+ *         name: from
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: to
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: category
+ *         schema: { type: string }
+ *       - in: query
+ *         name: minAmount
+ *         schema: { type: number }
+ *       - in: query
+ *         name: maxAmount
+ *         schema: { type: number }
+ *     responses:
+ *       200: { description: OK }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
+ *       500: { description: Internal server error }
+ */
 app.get('/expenses/admin/all', requireAdmin, async (req, res) => {
   try {
     const { employeeId, from, to, category, minAmount, maxAmount } = req.query;
@@ -273,7 +490,30 @@ app.get('/expenses/admin/all', requireAdmin, async (req, res) => {
   }
 });
 
-// GET /expenses/admin/employee/:employeeId – admin view za enega zaposlenega
+/**
+ * @openapi
+ * /expenses/admin/employee/{employeeId}:
+ *   get:
+ *     summary: Admin view za enega zaposlenega
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: employeeId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: from
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: to
+ *         schema: { type: string, format: date }
+ *     responses:
+ *       200: { description: OK }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
+ *       500: { description: Internal server error }
+ */
 app.get('/expenses/admin/employee/:employeeId', requireAdmin, async (req, res) => {
   try {
     const { employeeId } = req.params;
@@ -305,7 +545,33 @@ app.get('/expenses/admin/employee/:employeeId', requireAdmin, async (req, res) =
   }
 });
 
-// POST /expenses/admin/createForEmployee – admin doda expense za uporabnika
+/**
+ * @openapi
+ * /expenses/admin/createForEmployee:
+ *   post:
+ *     summary: Admin doda expense za poljubnega uporabnika
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [employeeId, expenseDate, category, amount]
+ *             properties:
+ *               employeeId: { type: string }
+ *               expenseDate: { type: string, format: date }
+ *               category: { type: string }
+ *               amount: { type: number }
+ *               description: { type: string, nullable: true }
+ *     responses:
+ *       201: { description: Created }
+ *       400: { description: Bad request }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
+ *       500: { description: Internal server error }
+ */
 app.post('/expenses/admin/createForEmployee', requireAdmin, async (req, res) => {
   try {
     const { employeeId, expenseDate, category, amount, description } = req.body;
@@ -330,7 +596,37 @@ app.post('/expenses/admin/createForEmployee', requireAdmin, async (req, res) => 
   }
 });
 
-// PUT /expenses/admin/update/:id – admin posodobi expense kogarkoli
+/**
+ * @openapi
+ * /expenses/admin/update/{id}:
+ *   put:
+ *     summary: Admin posodobi expense kogarkoli
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               employeeId: { type: string, nullable: true }
+ *               expenseDate: { type: string, format: date, nullable: true }
+ *               category: { type: string, nullable: true }
+ *               amount: { type: number, nullable: true }
+ *               description: { type: string, nullable: true }
+ *     responses:
+ *       200: { description: OK }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
+ *       404: { description: Not found }
+ *       500: { description: Internal server error }
+ */
 app.put('/expenses/admin/update/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -360,15 +656,30 @@ app.put('/expenses/admin/update/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// DELETE /expenses/admin/delete/:id – admin izbriše expense kogarkoli
+/**
+ * @openapi
+ * /expenses/admin/delete/{id}:
+ *   delete:
+ *     summary: Admin izbriše expense kogarkoli
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200: { description: Deleted }
+ *       401: { description: Unauthorized }
+ *       403: { description: Forbidden }
+ *       404: { description: Not found }
+ *       500: { description: Internal server error }
+ */
 app.delete('/expenses/admin/delete/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await db.query(
-      'DELETE FROM expenses WHERE id = $1 RETURNING *',
-      [id]
-    );
+    const result = await db.query('DELETE FROM expenses WHERE id = $1 RETURNING *', [id]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Expense not found' });
@@ -383,4 +694,5 @@ app.delete('/expenses/admin/delete/:id', requireAdmin, async (req, res) => {
 
 app.listen(port, () => {
   console.log(`ExpenseService running on port ${port}`);
+  console.log(`Swagger: http://localhost:${port}/swagger`);
 });
