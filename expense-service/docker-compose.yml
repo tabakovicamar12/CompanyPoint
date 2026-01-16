@@ -24,6 +24,14 @@ services:
       DB_PASSWORD: expenses_password
       DB_NAME: 
       JWT_SECRET: secretkey123
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASS: guest
+      LOG_EXCHANGE: companypoint.logs
+      LOG_QUEUE: expense.logs
+      LOG_ROUTING_KEY: expense
+      SERVICE_NAME: expense-service
     depends_on:
       - db
     ports:

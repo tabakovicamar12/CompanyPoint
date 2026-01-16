@@ -6,12 +6,18 @@ const swaggerJsdoc = require('swagger-jsdoc');
 require('dotenv').config();
 const db = require('./db');
 
+const correlationIdMiddleware = require('./middleware/correlationId.middleware');
+const loggingMiddleware = require('./middleware/logging.middleware');
+
 const app = express();
 const port = process.env.PORT || 3001;
 
 // CORS (allow Authorization header)
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+
+app.use(correlationIdMiddleware);
+app.use(loggingMiddleware);
 
 /**
  * -------------------------
@@ -690,6 +696,35 @@ app.delete('/expenses/admin/delete/:id', requireAdmin, async (req, res) => {
     console.error('Error admin deleting expense:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
+});
+
+/**
+ * -------------------------
+ * Global error handler
+ * -------------------------
+ */
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+
+  // publish error log
+  const { publishLog } = require('./rabbitmq');
+  publishLog({
+    timestamp: new Date().toISOString(),
+    logType: 'ERROR',
+    url: `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+    method: req.method,
+    status: 500,
+    correlationId: req.correlationId,
+    app: process.env.SERVICE_NAME || 'expense-service',
+    message: err.message || 'Unhandled error',
+    meta: {
+      stack: err.stack,
+      userId: req.user?.id || null,
+      role: req.user?.role || null,
+    },
+  });
+
+  res.status(500).json({ message: 'Internal server error' });
 });
 
 app.listen(port, () => {
