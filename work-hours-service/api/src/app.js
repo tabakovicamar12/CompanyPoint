@@ -8,11 +8,17 @@ const swaggerJsdoc = require('swagger-jsdoc');
 require('dotenv').config();
 const db = require('./db');
 
+const correlationIdMiddleware = require('./middleware/correlationId.middleware');
+const loggingMiddleware = require('./middleware/logging.middleware');
+
 const app = express();
 const port = process.env.PORT || 3002;
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+
+app.use(correlationIdMiddleware);
+app.use(loggingMiddleware);
 
 /**
  * -------------------------
@@ -47,10 +53,10 @@ const TODOCHART_SERVICE_URL =
  *
  * GET /toDoChartService/Tasks
  */
-const validateTaskExists = async ({ taskId, token }) => {
+const validateTaskExists = async ({ taskId, token, correlationId }) => {
   const url = `${TODOCHART_SERVICE_URL}/toDoChartService/Tasks`;
   const resp = await axios.get(url, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, 'X-Correlation-Id': correlationId },
     timeout: 5000,
   });
 
@@ -64,18 +70,18 @@ const validateTaskExists = async ({ taskId, token }) => {
  *
  * Če employeeId NI numeric (Mongo id iz auth-service), naredimo fallback na validateTaskExists().
  */
-const validateTaskForEmployee = async ({ taskId, employeeId, token }) => {
+const validateTaskForEmployee = async ({ taskId, employeeId, token, correlationId }) => {
   if (!taskId) return true; // taskId optional
 
   const empNum = toIntOrNull(employeeId);
   if (!empNum) {
     // JWT ima Mongo id => ToDoChart expects numeric -> fallback na obstoj taska
-    return validateTaskExists({ taskId, token });
+    return validateTaskExists({ taskId, token, correlationId });
   }
 
   const url = `${TODOCHART_SERVICE_URL}/toDoChartService/Tasks/byEmployee/${empNum}`;
   const resp = await axios.get(url, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${token}`, 'X-Correlation-Id': correlationId },
     timeout: 5000,
   });
 
@@ -242,7 +248,7 @@ app.post('/workHours/log', async (req, res) => {
     const token = getBearerToken(req);
     if (taskId) {
       try {
-        const ok = await validateTaskForEmployee({ taskId, employeeId, token });
+        const ok = await validateTaskForEmployee({ taskId, employeeId, token, correlationId: req.correlationId });
         if (!ok) {
           return res.status(400).json({
             message: `Task ${taskId} ne obstaja (ali ne pripada employeeId=${employeeId}).`,
@@ -359,7 +365,7 @@ app.put('/workHours/update/:id', async (req, res) => {
     const token = getBearerToken(req);
     if (taskId) {
       try {
-        const ok = await validateTaskForEmployee({ taskId, employeeId, token });
+        const ok = await validateTaskForEmployee({ taskId, employeeId, token, correlationId: req.correlationId });
         if (!ok) {
           return res.status(400).json({
             message: `Task ${taskId} ne obstaja (ali ne pripada employeeId=${employeeId}).`,
@@ -597,7 +603,7 @@ app.post('/workHours/admin/logForEmployee', requireAdmin, async (req, res) => {
     const token = getBearerToken(req);
     if (taskId) {
       try {
-        const ok = await validateTaskForEmployee({ taskId, employeeId, token });
+        const ok = await validateTaskForEmployee({ taskId, employeeId, token, correlationId: req.correlationId });
         if (!ok) {
           return res.status(400).json({
             message: `Task ${taskId} ne obstaja (ali ne pripada employeeId=${employeeId}).`,
@@ -675,6 +681,7 @@ app.put('/workHours/admin/update/:id', requireAdmin, async (req, res) => {
           taskId,
           employeeId: employeeIdForEntry,
           token,
+          correlationId: req.correlationId,
         });
         if (!ok) {
           return res.status(400).json({
@@ -745,6 +752,34 @@ app.delete('/workHours/admin/delete/:id', requireAdmin, async (req, res) => {
     console.error('Error admin deleting work_hours:', err);
     res.status(500).json({ message: 'Internal server error' });
   }
+});
+
+/**
+ * -------------------------
+ * Global error handler
+ * -------------------------
+ */
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+
+  const { publishLog } = require('./rabbitmq');
+  publishLog({
+    timestamp: new Date().toISOString(),
+    logType: 'ERROR',
+    url: `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+    method: req.method,
+    status: 500,
+    correlationId: req.correlationId,
+    app: process.env.SERVICE_NAME || 'workhours-service',
+    message: err.message || 'Unhandled error',
+    meta: {
+      stack: err.stack,
+      userId: req.user?.id || null,
+      role: req.user?.role || null,
+    },
+  });
+
+  res.status(500).json({ message: 'Internal server error' });
 });
 
 app.listen(port, () => {

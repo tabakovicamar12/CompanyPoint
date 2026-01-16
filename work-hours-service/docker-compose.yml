@@ -24,6 +24,11 @@ services:
       DB_NAME: workhours_db
       JWT_SECRET: secretkey123
       TODOCHART_SERVICE_URL: http://todochart-service:8080
+      SERVICE_NAME: workhours-service
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      LOG_EXCHANGE: logs.exchange
+      LOG_QUEUE: workhours.logs.queue
+      LOG_ROUTING_KEY: workhours.logs
     depends_on:
       - db
     ports:

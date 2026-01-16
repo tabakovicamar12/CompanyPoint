@@ -1,6 +1,7 @@
-version: "3.9"
-
 services:
+  # -------------------------
+  # AUTH
+  # -------------------------
   auth-db:
     image: mongo:6.0
     container_name: auth-mongo-db
@@ -28,6 +29,20 @@ services:
       - auth-db
     command: ["npm", "start"]
 
+  # -------------------------
+  # RABBITMQ (logging broker)
+  # -------------------------
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  # -------------------------
+  # EXPENSE
+  # -------------------------
   expense-db:
     image: postgres:15
     container_name: expense-db
@@ -44,6 +59,7 @@ services:
   expense-api:
     build: ./expense-service/api
     container_name: expense-api
+    restart: always
     environment:
       PORT: 3001
       DB_HOST: expense-db
@@ -52,11 +68,28 @@ services:
       DB_PASSWORD: expenses_password
       DB_NAME: expenses_db
       JWT_SECRET: thIsismysup€rsafes3cretkey123!
+
+      # >>> RabbitMQ / logging settings (DODANO)
+      SERVICE_NAME: expense-service
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      LOG_EXCHANGE: logs.exchange
+      LOG_QUEUE: expense.logs.queue
+      LOG_ROUTING_KEY: expense.logs
+
+      # (optional) backward compat, če tvoja rabbitmq helper koda bere HOST/PORT
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASS: guest
     depends_on:
       - expense-db
+      - rabbitmq
     ports:
       - "3001:3001"
 
+  # -------------------------
+  # WORKHOURS
+  # -------------------------
   workhours-db:
     image: postgres:15
     container_name: workhours-db
@@ -73,6 +106,7 @@ services:
   workhours-api:
     build: ./work-hours-service/api
     container_name: workhours-api
+    restart: always
     environment:
       PORT: 3002
       DB_HOST: workhours-db
@@ -82,12 +116,23 @@ services:
       DB_NAME: workhours_db
       JWT_SECRET: thIsismysup€rsafes3cretkey123!
       TODOCHART_SERVICE_URL: http://todochart-service:8080
+
+      # >>> RabbitMQ / logging settings
+      SERVICE_NAME: workhours-service
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      LOG_EXCHANGE: logs.exchange
+      LOG_QUEUE: workhours.logs.queue
+      LOG_ROUTING_KEY: workhours.logs
     depends_on:
       - workhours-db
       - todochart-service
+      - rabbitmq
     ports:
       - "3002:3002"
 
+  # -------------------------
+  # EMPLOYEE SERVICE (.NET)
+  # -------------------------
   employee-db:
     image: postgres:16-alpine
     container_name: employee-db
@@ -117,6 +162,9 @@ services:
     ports:
       - "5007:8080"
 
+  # -------------------------
+  # HOLIDAY SERVICE (Node)
+  # -------------------------
   holiday-db:
     image: postgres:15-alpine
     container_name: holiday-db
@@ -145,7 +193,7 @@ services:
       DB_SYNC: "true"
       JWT_SECRET: thIsismysup€rsafes3cretkey123!
       AUTH_SERVICE_URL: http://auth-api:3000
-      TODOCHART_SERVICE_URL: http://todochart-service:5003
+      TODOCHART_SERVICE_URL: http://todochart-service:8080
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
     depends_on:
@@ -155,6 +203,9 @@ services:
     ports:
       - "5004:5004"
 
+  # -------------------------
+  # TODOCHART SERVICE (.NET)
+  # -------------------------
   todo-db:
     image: postgres:16-alpine
     container_name: todo-db
@@ -185,6 +236,9 @@ services:
     ports:
       - "5003:8080"
 
+  # -------------------------
+  # REPORTING SERVICE (Node)
+  # -------------------------
   reporting-db:
     image: postgres:15-alpine
     container_name: reporting-db
@@ -223,13 +277,6 @@ services:
     ports:
       - "5008:5008"
 
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-
 volumes:
   auth_data:
   expense-data:
@@ -238,4 +285,3 @@ volumes:
   holiday-data:
   todo-data:
   reporting-data:
- 
