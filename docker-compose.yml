@@ -155,7 +155,7 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__EmployeeDb: Host=employee-db;Port=5432;Database=EmployeeDB;Username=employee_user;Password=employee_pass
       JWT_SECRET: thIsismysup€rsafes3cretkey123!
-      STATISTICS_URL: http://statistics-service:8080
+      STATISTICS_URL: https://companypoint.onrender.com
       STATS_API_KEY: stats_key_123
     depends_on:
       - employee-db
@@ -301,6 +301,7 @@ services:
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__StatsDb: Host=statistics-db;Port=5432;Database=StatsDB;Username=stats_user;Password=stats_pass
       JWT_SECRET: thIsismysup€rsafes3cretkey123!
+      #ConnectionStrings__StatsDb: postgresql://stats_user:hWYJh4plSHOyWKrARIi5ixkIcgSHvXYb@dpg-d5ls979r0fns73eis020-a.oregon-postgres.render.com/statsdb
     depends_on:
       - statistics-db
     ports:
