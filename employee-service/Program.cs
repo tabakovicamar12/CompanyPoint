@@ -85,6 +85,13 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.AddHttpClient("Statistics", client =>
+{
+    var baseUrl = Environment.GetEnvironmentVariable("STATISTICS_URL");
+    if (!string.IsNullOrWhiteSpace(baseUrl))
+        client.BaseAddress = new Uri(baseUrl);
+});
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -96,6 +103,8 @@ app.UseMiddleware<CorrelationIdMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<EmployeeService.Middleware.StatisticsReportingMiddleware>();
 
 app.Use(async (context, next) =>
 {
