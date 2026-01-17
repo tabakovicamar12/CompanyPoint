@@ -49,21 +49,20 @@ public class StatisticsReportingMiddleware
             var client = _httpClientFactory.CreateClient("Statistics");
             client.Timeout = TimeSpan.FromSeconds(2);
 
-            using var req = new HttpRequestMessage(HttpMethod.Post, "/stats");
+            var req = new HttpRequestMessage(HttpMethod.Post, "/stats");
             req.Headers.TryAddWithoutValidation("Authorization", auth);
 
-            var payload = new
+            req.Content = JsonContent.Create(new
             {
                 klicanaStoritev = $"{context.Request.Method} {path}"
-            };
+            });
 
-            req.Content = JsonContent.Create(payload);
-
-            _ = client.SendAsync(req);
+            await client.SendAsync(req);
         }
         catch (Exception ex)
         {
             _logger.LogDebug(ex, "Statistics reporting failed.");
         }
+
     }
 }

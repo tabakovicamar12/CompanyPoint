@@ -13,7 +13,6 @@ namespace EmployeeService.Controllers;
 public class EmployeesController : ControllerBase
 {
     private readonly EmployeeDbContext _context;
-
     private readonly RabbitMqLogPublisher _log;
 
     public EmployeesController(EmployeeDbContext context, RabbitMqLogPublisher log)
@@ -22,11 +21,10 @@ public class EmployeesController : ControllerBase
         _log = log;
     }
 
-    // GET  employeeService/employees
+    // GET employeeService/employees
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Employee>>> GetAll()
     {
-
         var cid = HttpContext.Items["X-Correlation-Id"]?.ToString();
 
         _log.Publish(new
@@ -39,16 +37,15 @@ public class EmployeesController : ControllerBase
             message = "GET employees"
         });
 
-
         var employees = await _context.Employees.ToListAsync();
         return Ok(employees);
     }
 
-    // GET  employeeService/employees/{id}
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<Employee>> GetById(int id)
+    // GET employeeService/employees/{id}
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Employee>> GetById(string id)
     {
-        var emp = await _context.Employees.FindAsync(id);
+        var emp = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
         if (emp == null) return NotFound();
         return Ok(emp);
     }
@@ -78,17 +75,18 @@ public class EmployeesController : ControllerBase
 
         _context.Employees.AddRange(employees);
         await _context.SaveChangesAsync();
+
         return Ok(new { Count = employees.Count });
     }
 
     // PUT employeeService/employees/{id}
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult> Update(int id, Employee updated)
+    [HttpPut("{id}")]
+    public async Task<ActionResult> Update(string id, Employee updated)
     {
         if (id != updated.Id)
             return BadRequest("Id mismatch.");
 
-        var existing = await _context.Employees.FindAsync(id);
+        var existing = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
         if (existing == null) return NotFound();
 
         existing.FirstName = updated.FirstName;
@@ -104,10 +102,10 @@ public class EmployeesController : ControllerBase
     }
 
     // PUT employeeService/employees/{id}/role
-    [HttpPut("{id:int}/role")]
-    public async Task<ActionResult> UpdateRole(int id, [FromBody] RoleUpdateDto dto)
+    [HttpPut("{id}/role")]
+    public async Task<ActionResult> UpdateRole(string id, [FromBody] RoleUpdateDto dto)
     {
-        var existing = await _context.Employees.FindAsync(id);
+        var existing = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
         if (existing == null) return NotFound();
 
         existing.Position = dto.Position;
@@ -119,10 +117,10 @@ public class EmployeesController : ControllerBase
     }
 
     // DELETE employeeService/employees/{id}
-    [HttpDelete("{id:int}")]
-    public async Task<ActionResult> Delete(int id)
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> Delete(string id)
     {
-        var existing = await _context.Employees.FindAsync(id);
+        var existing = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
         if (existing == null) return NotFound();
 
         _context.Employees.Remove(existing);
