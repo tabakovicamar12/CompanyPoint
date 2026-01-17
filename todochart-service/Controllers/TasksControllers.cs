@@ -27,8 +27,8 @@ public class TasksController : ControllerBase
     }
 
     // GET toDoChartService/tasks/byEmployee/{employeeId}
-    [HttpGet("byEmployee/{employeeId:int}")]
-    public async Task<ActionResult<IEnumerable<TaskItem>>> GetByEmployee(int employeeId)
+    [HttpGet("byEmployee/{employeeId}")]
+    public async Task<ActionResult<IEnumerable<TaskItem>>> GetByEmployee(string employeeId)
     {
         var tasks = await _context.Tasks
             .Include(t => t.TodoList)
@@ -132,8 +132,8 @@ public async Task<ActionResult<TaskItem>> CreateTask([FromBody] CreateTaskDto dt
     }
 
     // DELETE toDoChartService/tasks/byEmployee/{employeeId}
-    [HttpDelete("byEmployee/{employeeId:int}")]
-    public async Task<ActionResult> DeleteTasksByEmployee(int employeeId)
+    [HttpDelete("byEmployee/{employeeId}")]
+    public async Task<ActionResult> DeleteTasksByEmployee(string employeeId)
     {
         var tasks = await _context.Tasks
             .Include(t => t.TodoList)
@@ -172,8 +172,8 @@ public async Task<ActionResult<TaskItem>> CreateTask([FromBody] CreateTaskDto dt
         return Ok(list);
     }
     // GET toDoChartService/todoLists/byEmployee/{employeeId}
-    [HttpGet("toDoListByEmployee/{employeeId:int}")]
-    public async Task<ActionResult<IEnumerable<TodoList>>> GetToDoListByEmployee(int employeeId)
+    [HttpGet("toDoListByEmployee/{employeeId}")]
+    public async Task<ActionResult<IEnumerable<TodoList>>> GetToDoListByEmployee(string employeeId)
     {
         var lists = await _context.TodoLists
             .Include(l => l.Tasks)
@@ -189,7 +189,7 @@ public async Task<ActionResult<TaskItem>> CreateTask([FromBody] CreateTaskDto dt
 
 public class CreateTodoListDto
 {
-    public int EmployeeId { get; set; }
+    public string EmployeeId { get; set; }
     public string Title { get; set; } = "";
 }
 
