@@ -140,15 +140,19 @@ router.put('/setRole/:userId', authController.setRole);
 
 /**
  * @swagger
- * /logout:
- *   delete:
- *     summary: Odjava uporabnika
- *     tags: [AuthService]
- *     responses:
- *       200:
- *         description: Uporabnik odjavljen
+ * /getUserData:
+ * get:
+ * summary: Pridobi podatke o prijavljenem uporabniku
+ * tags: [AuthService]
+ * security:
+ * - bearerAuth: []
+ * responses:
+ * 200:
+ * description: Podatki o uporabniku uspešno pridobljeni
+ * 401:
+ * description: Neveljaven žeton
  */
-router.delete('/logout', authController.logoutUser);
+router.get('/getUserData', authController.getUserData);
 
 /**
  * @swagger

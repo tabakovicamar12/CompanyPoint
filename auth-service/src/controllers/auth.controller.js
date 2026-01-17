@@ -163,19 +163,26 @@ export const setRole = [protect, async (req, res) => {
 }];
 
 /**
- * @route DELETE /authService/logout
- * @desc 1. DELETE: Odjava (Ni fizičnega brisanja, le informativna pot)
+ * @route GET /authService/getUserData
+ * @desc Pridobi podatke user glede na token
  */
-export const logoutUser = (req, res) => {
-    token = req.headers.authorization.split(' ')[1];
-    if (token) {
-        token = null;
-        res.status(200).json({ message: 'Uspešno odjavljen. Žeton invalidiran na odjemalčevi strani.' });
+export const getUserData = [protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ error: 'Uporabnika ni mogoče najti.' });
+        }
+
+        res.status(200).json({
+            email: user.email,
+            name: user.email.split('@')[0],
+            role: user.role
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Napaka strežnika.' });
     }
-    else {
-        res.status(400).json({ error: 'Ni žetona za odjavo.' });
-    }
-};
+}];
 
 /**
  * @route DELETE /authService/unregister/:userId
