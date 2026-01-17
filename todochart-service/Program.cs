@@ -5,7 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ToDoChartService.Data;
 using ToDoChartService.Logging;
-using ToDoChartService.Middleware;
+
 
 var builder = WebApplication.CreateBuilder(args);
 

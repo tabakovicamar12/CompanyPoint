@@ -171,6 +171,18 @@ public async Task<ActionResult<TaskItem>> CreateTask([FromBody] CreateTaskDto dt
 
         return Ok(list);
     }
+    // GET toDoChartService/todoLists/byEmployee/{employeeId}
+    [HttpGet("toDoListByEmployee/{employeeId:int}")]
+    public async Task<ActionResult<IEnumerable<TodoList>>> GetToDoListByEmployee(int employeeId)
+    {
+        var lists = await _context.TodoLists
+            .Include(l => l.Tasks)
+            .Where(l => l.EmployeeId == employeeId)
+            .OrderBy(l => l.Id)
+            .ToListAsync();
+
+        return Ok(lists);
+    }
 
 
 }
