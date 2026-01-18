@@ -321,18 +321,18 @@ services:
 # -------------------------
 # ANGULAR FRONTEND
 # -------------------------
-#  frontend:
-#    build:
-#      context: ./students_system 
-#      dockerfile: Dockerfile
-#    container_name: company-frontend
-#    restart: always
-#    ports:
-#      - "4200:80"
-#    depends_on:
-#      - auth-api
-#      - expense-api
-#      - workhours-api
+  frontend:
+    build:
+      context: ./students_system 
+      dockerfile: Dockerfile
+    container_name: company-frontend
+    restart: always
+    ports:
+      - "4200:80"
+    depends_on:
+      - auth-api
+      - expense-api
+      - workhours-api
 
 
 
