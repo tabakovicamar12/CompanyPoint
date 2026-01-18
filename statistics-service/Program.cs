@@ -68,10 +68,10 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowLocalhost4200", policy =>
+    options.AddPolicy("CorsPolicy", policy =>
     {
         policy
-            .WithOrigins("http://localhost:4200")
+            .WithOrigins("http://localhost:4200", "https://localhost:4200")
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -81,6 +81,10 @@ var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI();
+
+app.UseRouting();
+
+app.UseCors("CorsPolicy");   
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -106,12 +110,11 @@ using (var scope = app.Services.CreateScope())
         {
             retries++;
             Console.WriteLine($"[StatisticsService] DB not ready (attempt {retries}/{maxRetries}): {ex.Message}");
-
             if (retries >= maxRetries) throw;
             Thread.Sleep(delay);
         }
     }
 }
-app.UseCors("AllowLocalhost4200");
+
 app.MapControllers();
 app.Run();
