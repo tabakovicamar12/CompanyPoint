@@ -110,6 +110,24 @@ router.put('/updatePassword', authController.updatePassword);
 
 /**
  * @swagger
+ * /getAllUsers:
+ * get:
+ * summary: Pridobi seznam vseh uporabnikov (samo za admine)
+ * tags: [AuthService]
+ * security:
+ * - bearerAuth: []
+ * responses:
+ * 200:
+ * description: Seznam uporabnikov uspešno pridobljen
+ * 401:
+ * description: Neveljaven žeton
+ * 403:
+ * description: Dostop zavrnjen (niste admin)
+ */
+router.get('/getAllUsers', authController.getAllUsers);
+
+/**
+ * @swagger
  * /setRole/{userId}:
  *   put:
  *     summary: Nastavi vlogo uporabnika

@@ -201,3 +201,28 @@ export const unregisterUser = [protect, async (req, res) => {
         res.status(500).json({ error: 'Napaka strežnika.' });
     }
 }];
+
+/**
+ * @route GET /authService/users
+ * @desc Vrne vse uporabnike (potrebna admin vloga)
+ */
+export const getAllUsers = [protect, async (req, res) => {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Dostop zavrnjen. Zahtevana je admin vloga.' });
+    }
+
+    try {
+        const users = await User.find({}).select('_id email role');
+        const formattedUsers = users.map(user => ({
+            id: user._id,
+            email: user.email,
+            name: user.email.split('@')[0],
+            role: user.role
+        }));
+
+        res.status(200).json(formattedUsers);
+    } catch (error) {
+        console.error('Napaka pri pridobivanju uporabnikov:', error);
+        res.status(500).json({ error: 'Napaka strežnika.' });
+    }
+}];
