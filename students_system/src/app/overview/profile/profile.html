@@ -2,11 +2,15 @@
     <div class="work-card">
         <p-toast></p-toast>
 
-        <div class="flex gap-2 mb-4" style="margin-top: 10px">
-            <p-button label="Update Password" icon="pi pi-key" severity="warn" (onClick)="showDialog()"></p-button>
-            <p-button label="Logs" class="mid-button-report" icon="pi pi-list" severity="secondary" (onClick)="loadLogs()"></p-button>
-            <p-button *ngIf="isAdmin" label="Refresh List" icon="pi pi-sync" [text]="true"
-                (onClick)="loadUsers()"></p-button>
+        <div class="profile-header mb-4">
+            <div class="header-left">
+                <h2 class="page-title">Profile</h2>
+            </div>
+            <div class="header-actions">
+                <p-button label="Update Password" icon="pi pi-key" severity="warn" (onClick)="showDialog()"></p-button>
+                <p-button label="Logs" *ngIf="isAdmin" icon="pi pi-list" severity="secondary" (onClick)="loadLogs()"></p-button>
+                <p-button *ngIf="isAdmin" label="Refresh List" icon="pi pi-sync" [text]="true" (onClick)="loadUsers()"></p-button>
+            </div>
         </div>
 
         <div *ngIf="isAdmin">

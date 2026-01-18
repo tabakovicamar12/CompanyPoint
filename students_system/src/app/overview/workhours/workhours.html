@@ -7,7 +7,7 @@
                 <p-button label="Log Work Hours" icon="pi pi-plus" (onClick)="showAddDialog()"></p-button>
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4" *ngif="isAdmin">
                 <input pInputText [(ngModel)]="tableSearchText" (ngModelChange)="onTableSearchChange()" 
                     type="text" placeholder="Search by date or description..." class="w-full" 
                     style="padding: 0.75rem; border: 1px solid #ced4da; border-radius: 6px;" />

@@ -33,8 +33,6 @@ export class Menu implements OnInit, OnDestroy {
     this.generateMenu();
 
     this.subscription = this.authService.user$.subscribe(user => {
-      this.cdr.markForCheck();
-
       if (user) {
         this.userEmail = user.email;
         this.userRole = user.role;
@@ -43,20 +41,20 @@ export class Menu implements OnInit, OnDestroy {
         this.userEmail = '';
         this.userRole = '';
         this.items = [];
-        this.cdr.markForCheck();
+        this.cdr.detectChanges();
       }
     });
 
     const storageListener = () => {
       this.initializeFromStorage();
       this.generateMenu();
-      this.cdr.markForCheck();
+      this.cdr.detectChanges();
     };
 
     const loginListener = () => {
       this.initializeFromStorage();
       this.generateMenu();
-      this.cdr.markForCheck();
+      this.cdr.detectChanges();
     };
 
     window.addEventListener('storage', storageListener);
@@ -93,25 +91,25 @@ export class Menu implements OnInit, OnDestroy {
     const role = (this.userRole || '').toLowerCase();
 
     const baseItems: MenuItem[] = [
-      { label: 'Tasks', icon: 'pi pi-check-square', command: () => this.router.navigate(['/todo']) },
-      { label: 'Work Hours', icon: 'pi pi-clock', command: () => this.router.navigate(['/workhours']) },
-      { label: 'Expenses', icon: 'pi pi-wallet', command: () => this.router.navigate(['/expenses']) },
-      { label: 'Holidays', icon: 'pi pi-sun', command: () => this.router.navigate(['/holidays']) },
-      { label: 'Reports', icon: 'pi pi-chart-bar', command: () => this.router.navigate(['/reporting']) },
-      { label: 'Profile', icon: 'pi pi-lock', command: () => this.router.navigate(['/profile']) },
+      { label: 'Tasks', icon: 'pi pi-check-square', routerLink: ['/todo'], command: () => this.router.navigate(['/todo']) },
+      { label: 'Work Hours', icon: 'pi pi-clock', routerLink: ['/workhours'], command: () => this.router.navigate(['/workhours']) },
+      { label: 'Expenses', icon: 'pi pi-wallet', routerLink: ['/expenses'], command: () => this.router.navigate(['/expenses']) },
+      { label: 'Holidays', icon: 'pi pi-sun', routerLink: ['/holidays'], command: () => this.router.navigate(['/holidays']) },
+      { label: 'Reports', icon: 'pi pi-chart-bar', routerLink: ['/reporting'], command: () => this.router.navigate(['/reporting']) },
+      { label: 'Profile', icon: 'pi pi-lock', routerLink: ['/profile'], command: () => this.router.navigate(['/profile']) },
     ];
 
     if (role === 'admin') {
       this.items = [
         ...baseItems,
-        { label: 'Employees', icon: 'pi pi-users', command: () => this.router.navigate(['/employee']) },
-        { label: 'Statistics', icon: 'pi pi-chart-line', command: () => this.router.navigate(['/statistics']) }
+        { label: 'Employees', icon: 'pi pi-users', routerLink: ['/employee'] },
+        { label: 'Statistics', icon: 'pi pi-chart-line', routerLink: ['/statistics'] }
       ];
     } else {
       this.items = baseItems;
     }
 
-    this.cdr.markForCheck();
+    this.cdr.detectChanges();
   }
 
   logout() {

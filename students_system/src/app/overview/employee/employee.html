@@ -12,13 +12,13 @@
 
                 <div class="flex flex-wrap gap-4 justify-content-start mb-4">
                     <div class="field flex flex-column align-items-start" style="width: 280px;">
-                        <label for="search" class="font-bold text-sm text-700 mb-2">Search</label>
+                        <label for="search" class="mb-2">Search</label>
                         <input id="search" pInputText [(ngModel)]="searchText" type="text" class="w-full"
                             placeholder="Search by name or email" (keyup)="applyFilters()" />
                     </div>
 
                     <div class="field flex flex-column align-items-start" style="width: 280px;">
-                        <label for="dept" class="font-bold text-sm text-700 mb-2">Department</label>
+                        <label for="dept" class="mb-2">Department</label>
                         <p-select id="dept" [options]="departments" [(ngModel)]="selectedDepartment" optionLabel="label"
                             optionValue="value" placeholder="Select Department" styleClass="w-full dialog-input"
                             (onChange)="applyFilters()" appendTo="body">
@@ -26,7 +26,7 @@
                     </div>
 
                     <div class="field flex flex-column align-items-start" style="width: 280px;">
-                        <label for="status" class="font-bold text-sm text-700 mb-2">Status</label>
+                        <label for="status" class="mb-2">Status</label>
                         <p-select id="status" [options]="statusOptions" [(ngModel)]="selectedStatus" optionLabel="label"
                             optionValue="value" placeholder="Select Status" styleClass="w-full dialog-input"
                             (onChange)="applyFilters()" appendTo="body">

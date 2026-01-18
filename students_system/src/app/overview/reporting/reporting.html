@@ -28,8 +28,8 @@
                         <td>{{ report.periodStart | date:'yyyy-MM-dd' }}</td>
                         <td>{{ report.periodEnd | date:'yyyy-MM-dd' }}</td>
                         <td>{{ report.totalHours || 0 }}</td>
-                        <td>${{ report.hourlyRate || 0 }}</td>
-                        <td>${{ report.totalPay || 0 }}</td>
+                        <td>{{ report.hourlyRate || 0 }}€</td>
+                        <td>{{ report.totalPay || 0 }}€</td>
                         <td>{{ report.source | uppercase }}</td>
                         <td>
                             <p-tag [value]="report.status | uppercase"
@@ -68,9 +68,9 @@
 
                 <div class="grid flex flex-wrap gap-4 justify-content-start mb-4">
                     <div class="field flex flex-column align-items-start md:w-15rem">
-                        <label for="empId" class="font-bold text-sm text-700 mb-2">Employee ID</label>
-                        <input id="empId" pInputText [(ngModel)]="selectedEmployeeId" type="text" class="w-full"
-                            placeholder="Search by ID" />
+                        <label for="empName" class="font-bold text-sm text-700 mb-2">Employee Name</label>
+                        <input id="empName" pInputText [(ngModel)]="selectedEmployeeName" (ngModelChange)="applyEmployeeNameFilter()"
+                            type="text" class="w-full" placeholder="Search by name" />
                     </div>
 
                     <div class="field flex flex-column align-items-start md:w-15rem">
@@ -104,7 +104,7 @@
                     <p-button label="Logs" icon="pi pi-list" severity="secondary" (onClick)="loadLogs()"></p-button>
                 </div>
 
-                <p-table [value]="allReports" [rows]="15" [paginator]="true" responsiveLayout="scroll"
+                <p-table [value]="allReportsFiltered" [rows]="15" [paginator]="true" responsiveLayout="scroll"
                     [loading]="isLoading" styleClass="p-datatable-striped">
                     <ng-template pTemplate="header">
                         <tr>
@@ -126,9 +126,9 @@
                             <td>{{ report.userName || '-' }}</td>
                             <td>{{ report.periodStart | date:'yyyy-MM-dd' }}</td>
                             <td>{{ report.periodEnd | date:'yyyy-MM-dd' }}</td>
-                            <td>{{ report.totalHours || 0 }}</td>
-                            <td>${{ report.hourlyRate || 0 }}</td>
-                            <td>${{ report.totalPay || 0 }}</td>
+                            <td>{{ report.totalHours || 0 }}€</td>
+                            <td>{{ report.hourlyRate || 0 }}€</td>
+                            <td>{{ report.totalPay || 0 }}</td>
                             <td>{{ report.source | uppercase }}</td>
                             <td>
                                 <p-tag [value]="report.status | uppercase"
@@ -223,7 +223,7 @@
                 <label class="font-bold text-sm text-700">
                     Total Pay
                 </label>
-                <input pInputText [value]="'$' + (currentReport.totalHours * currentReport.hourlyRate | number:'1.2-2')" 
+                <input pInputText [value]="'€' + (currentReport.totalHours * currentReport.hourlyRate | number:'1.2-2')" 
                     [disabled]="true" class="w-full opacity-70" style="background: #f4f4f4;" />
             </div>
 

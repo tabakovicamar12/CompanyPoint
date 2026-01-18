@@ -73,9 +73,9 @@ export class Profile implements OnInit {
     if (!this.isAdmin) return;
 
     this.isLoadingTable = true;
+    this.cdr.detectChanges();
     try {
       const data = await this.authService.getAllEmployees();
-      console.log(data)
       if (Array.isArray(data)) {
         this.users = data;
       } else {
@@ -85,6 +85,7 @@ export class Profile implements OnInit {
       this.showError('Failed to load user list.');
     } finally {
       this.isLoadingTable = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -135,6 +136,7 @@ export class Profile implements OnInit {
     }
 
     this.isLoading = true;
+    this.cdr.detectChanges();
     try {
       await this.authService.updatePassword({
         currentPassword: this.passwordData.currentPassword,
@@ -143,10 +145,13 @@ export class Profile implements OnInit {
 
       this.showSuccess('Password updated successfully.');
       this.displayPasswordDialog = false;
+      this.cdr.detectChanges();
+      this.authService.logout();
     } catch (error: any) {
       this.showError(error.message || 'An error occurred while updating the password.');
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 

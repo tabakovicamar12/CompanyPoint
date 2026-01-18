@@ -59,10 +59,6 @@ export class DataService {
     this.data = this.data.filter(student => student.id !== studentId);
   }
 
-  /*getCourses(studentId: number) {
-    return this.courses.filter(course => course.student_id === studentId);
-  }*/
-
   getAllCourses() {
     return this.courses;
   }

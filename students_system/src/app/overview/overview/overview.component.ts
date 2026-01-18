@@ -20,7 +20,6 @@ export class OverviewComponent {
   items = [
     {
       label: 'Amar', badge: 'SUPER ADMIN', icon: 'pi pi-fw pi-users', command: () => {
-        console.log('Students clicked');
       }
     }
   ]

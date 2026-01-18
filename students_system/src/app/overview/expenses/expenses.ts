@@ -93,6 +93,7 @@ export class Expenses implements OnInit {
 
   private async loadData() {
     this.isLoading = true;
+    this.cdr.detectChanges();
     try {
       if (this.isUser) {
         await this.loadUserExpenses();
@@ -107,6 +108,7 @@ export class Expenses implements OnInit {
       this.showError('Failed to load data');
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -161,6 +163,11 @@ export class Expenses implements OnInit {
       amount: expense.amount || 0,
       description: expense.description || '',
     };
+
+    const empId = expense.employee_id ?? expense.employeeId ?? null;
+    this.currentExpense.employeeId = empId;
+    const user = this.employees.find(u => u && (String(u.id) === String(empId) || Number(u.id) === Number(empId)));
+    this.currentExpense.employeeName = user ? user.name : (expense.employee_name || expense.employeeName || '');
     this.displayDialog = true;
   }
 
@@ -229,6 +236,7 @@ export class Expenses implements OnInit {
 
   private async loadAllEmployeesExpenses() {
     this.isLoading = true;
+    this.cdr.detectChanges();
     try {
       const filters: any = {};
       if (this.selectedEmployeeId) {
@@ -256,10 +264,20 @@ export class Expenses implements OnInit {
       const expensesList = Array.isArray(data) ? data : [];
 
       this.allEmployeesExpenses = expensesList.map(expense => {
-        const user = usersList.find(u => Number(u.id) === Number(expense.employee_id));
+        const empId = expense.employee_id ?? expense.employeeId ?? null;
+        const user = usersList.find(u => {
+          if (!u) return false;
+          return String(u.id) === String(empId) || Number(u.id) === Number(empId);
+        });
+
+        const resolvedName = user ? user.name : (expense.employee_name || expense.employeeName || 'Unknown');
+
         return {
           ...expense,
-          employeeName: user ? user.name : 'Unknown'
+          employee_id: empId ?? expense.employee_id,
+          employeeId: empId ?? expense.employeeId,
+          employeeName: resolvedName,
+          employee_name: resolvedName
         };
       });
 
@@ -278,6 +296,7 @@ export class Expenses implements OnInit {
       this.allEmployeesFiltered = [];
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 

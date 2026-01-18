@@ -91,7 +91,7 @@
 }
 
 .align-items-center {
-    align-items: center;
+    align-items: baseline;
 }
 
 .align-items-start {
@@ -213,10 +213,6 @@ h3 {
 :host ::v-deep .p-inputtext,
 :host ::v-deep .p-select {
     width: 100% !important;
-}
-
-.mb-1.ng-star-inserted {
-    margin-top: 20px;
 }
 
 .md\:w-15rem {

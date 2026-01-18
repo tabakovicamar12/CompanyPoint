@@ -34,7 +34,6 @@ export class StudentsComponent {
   constructor(private dataService: DataService) {
     this.data = this.dataService.getStudents();
     this.data.forEach(student => {
-      //student.courses = this.dataService.getCourses(student.id);
       student.courses = [];
     });
   }

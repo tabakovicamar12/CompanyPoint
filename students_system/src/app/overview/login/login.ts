@@ -37,7 +37,7 @@ export class LoginComponent {
   password_length = false;
   check_email = false;
 
-  constructor(private authServ: AuthService, private messageServ: MessageService,private zone: NgZone) { }
+  constructor(private authServ: AuthService, private messageServ: MessageService, private zone: NgZone) { }
 
   onLogin() {
     if (this.data) {
@@ -52,16 +52,18 @@ export class LoginComponent {
 
             this.zone.run(() => {
               this.router.navigate(['/todo']).then(nav => {
-                console.log('Navigation successful:', nav);
               }).catch(err => {
                 console.error('Navigation failed:', err);
               });
             });
           }
+          else {
+            this.messageServ.add({ severity: 'error', summary: 'Error', detail: 'Invalid credentials' });
+          }
         })
         .catch((err) => {
           this.messageServ.add({ severity: 'error', summary: 'Error', detail: 'Invalid credentials' });
-        });
+        })
     }
   }
 

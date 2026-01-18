@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Statistics } from '../../../statistics';
 import { CardModule } from 'primeng/card';
 import { MessageService } from 'primeng/api';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-statistic-component',
@@ -13,6 +14,7 @@ import { MessageService } from 'primeng/api';
 })
 export class StatisticComponent implements OnInit {
   private statsService = inject(Statistics);
+  private cdr = inject(ChangeDetectorRef);
 
   statsData: any = {};
 
@@ -27,7 +29,7 @@ export class StatisticComponent implements OnInit {
   async loadStatistics() {
     try {
       this.statsData = await this.statsService.getCounts();
-      console.log(this.statsData);
+      this.cdr.detectChanges();
     } catch (err) {
       console.error('Greška pri dohvaćanju statistike', err);
     }

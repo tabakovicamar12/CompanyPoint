@@ -2,12 +2,12 @@
     <div class="work-card">
         <p-toast></p-toast>
         <ng-container *ngIf="isUser">
-            <div class="flex mb-1">
+            <div class="flex">
                 <h2 class="expenses-header" style="margin-right: 10px;">EXPENSES</h2>
                 <p-button label="Log Expense" icon="pi pi-plus" (onClick)="showAddDialog()"></p-button>
             </div>
 
-            <p-table [value]="allEmployeesFiltered" [rows]="10" [paginator]="true" responsiveLayout="scroll"
+            <p-table [value]="userExpenses" [rows]="10" [paginator]="true" responsiveLayout="scroll"
                 [loading]="isLoading" styleClass="p-datatable-striped">
                 <ng-template pTemplate="header">
                     <tr>
@@ -57,7 +57,7 @@
                     <div class="field flex flex-column align-items-start md:w-15rem">
                         <label for="empName" class="font-bold text-sm text-700 mb-2">Employee Name</label>
                         <input id="empName" pInputText [(ngModel)]="selectedEmployeeName"
-                            (input)="applyEmployeeNameFilter()" type="text" class="w-full"
+                            (ngModelChange)="applyEmployeeNameFilter()" type="text" class="w-full"
                             placeholder="Search by name..." />
                     </div>
 
@@ -94,7 +94,7 @@
                         (onClick)="refreshAdminData()"></p-button>
                 </div>
 
-                <p-table [value]="allEmployeesExpenses" [rows]="15" [paginator]="true" responsiveLayout="scroll"
+                <p-table [value]="allEmployeesFiltered" [rows]="15" [paginator]="true" responsiveLayout="scroll"
                     [loading]="isLoading" styleClass="p-datatable-striped">
                     <ng-template pTemplate="header">
                         <tr>

@@ -11,7 +11,6 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Menu } from '../menu/menu';
 import { RouterModule } from "@angular/router";
 import { InputTextModule } from 'primeng/inputtext';
 import { CardModule } from 'primeng/card';
@@ -36,11 +35,12 @@ export interface WorkLogPayload {
 
 @Component({
   selector: 'app-workhours',
+  standalone: true,
   imports: [
     TableModule, ButtonModule, DialogModule, DatePickerModule,
     CommonModule, FormsModule, InputNumberModule, TextareaModule,
     ToastModule, RouterModule, InputTextModule, CardModule, SelectModule
-],
+  ],
   templateUrl: './workhours.html',
   styleUrl: './workhours.css',
 })
@@ -91,6 +91,7 @@ export class Workhours implements OnInit {
 
   private async loadData() {
     this.isLoading = true;
+    this.cdr.detectChanges();
     try {
       if (this.isUser) {
         await this.loadUserWorkHours();
@@ -105,15 +106,14 @@ export class Workhours implements OnInit {
       this.showError('Failed to load data');
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 
   private async loadEmployeesForDropdown() {
     try {
       this.employees = await this.authService.getAllEmployees();
-      console.log('Loaded employees for dropdown:', this.employees);
     } catch (error) {
-      console.error('Failed to load employee list:', error);
     }
   }
 
@@ -152,10 +152,10 @@ export class Workhours implements OnInit {
   }
 
   editWorkEntryAdmin(entry: any) {
-    console.log('Editing entry as admin:', entry);
     this.isEdit = true;
     this.currentEntry = {
       id: entry.id,
+      employeeName: entry.employeeName,
       workDate: new Date(entry.work_date),
       hours: entry.hours,
       description: entry.description || '',
@@ -183,10 +183,11 @@ export class Workhours implements OnInit {
     try {
       if (this.isEdit) {
         if (this.isAdmin) {
-          this.workService.updateHoursByAdmin(this.currentEntry.id, payload);
+          await this.workService.updateHoursByAdmin(this.currentEntry.id, payload);
           this.showSuccess('Work entry updated by Admin');
+          await this.refreshAdminData();
         } else {
-          this.workService.updateMyHours(this.currentEntry.id, payload);
+          await this.workService.updateMyHours(this.currentEntry.id, payload);
           this.showSuccess('Work entry updated successfully');
         }
       } else {
@@ -195,11 +196,12 @@ export class Workhours implements OnInit {
             this.showError('Please select an employee');
             return;
           }
-          this.workService.logForEmployeeAdmin(payload);
+          await this.workService.logForEmployeeAdmin(payload);
+          await this.refreshAdminData();
           this.showSuccess('Work hours logged for employee');
 
         } else {
-          this.workService.logWorkHours(payload);
+          await this.workService.logWorkHours(payload);
           this.showSuccess('Work hours logged successfully');
         }
       }
@@ -207,10 +209,12 @@ export class Workhours implements OnInit {
       this.displayDialog = false;
       if (this.isAdmin) {
         this.isLoading = false;
-        this.loadAllEmployeesHours();
+        await this.loadAllEmployeesHours();
+        this.cdr.detectChanges();
       } else {
         this.isLoading = false;
-        this.loadUserWorkHours();
+        await this.loadUserWorkHours();
+        this.cdr.detectChanges();
       }
 
     } catch (error: any) {
@@ -222,9 +226,10 @@ export class Workhours implements OnInit {
   async deleteWorkEntry(entryId: string) {
     if (confirm('Are you sure you want to delete this entry?')) {
       try {
-        this.workService.deleteMyHours(entryId);
+        await this.workService.deleteMyHours(entryId);
         this.showSuccess('Work entry deleted successfully');
-        this.loadUserWorkHours();
+        await this.loadUserWorkHours();
+        this.cdr.detectChanges();
       } catch (error) {
         this.showError('Failed to delete work entry');
       }
@@ -233,6 +238,7 @@ export class Workhours implements OnInit {
 
   private async loadAllEmployeesHours() {
     this.isLoading = true;
+    this.cdr.detectChanges();
 
     try {
       const filters: any = {};
@@ -355,17 +361,20 @@ export class Workhours implements OnInit {
     if (confirm(confirmMsg)) {
       try {
         if (this.isAdmin) {
-          this.workService.deleteHoursByAdmin(entryId);
+          await this.workService.deleteHoursByAdmin(entryId);
+          await this.refreshAdminData();
         } else {
-          this.workService.deleteMyHours(entryId);
+          await this.workService.deleteMyHours(entryId);
         }
 
         this.showSuccess('Work entry deleted successfully');
 
         if (this.isAdmin) {
-          this.loadAllEmployeesHours();
+          await this.loadAllEmployeesHours();
+          await this.refreshAdminData();
         } else {
-          this.loadUserWorkHours();
+          await this.loadUserWorkHours();
+          this.cdr.detectChanges();
         }
 
       } catch (error) {

@@ -16,6 +16,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { CardModule } from 'primeng/card';
 import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
+import { ChangeDetectorRef } from '@angular/core';
 
 interface ReportEntry {
   id: string;
@@ -47,6 +48,7 @@ export class Reporting implements OnInit {
   private reportingService = inject(ReportingService);
   private authService = inject(AuthService);
   private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
 
   userRole: string = '';
   isAdmin: boolean = false;
@@ -57,8 +59,9 @@ export class Reporting implements OnInit {
   userReports: ReportEntry[] = [];
   allReports: ReportEntry[] = [];
   allLogs: Log[] = [];
-
+  allReportsFiltered: ReportEntry[] = [];
   selectedEmployeeId: string = '';
+  selectedEmployeeName: string = '';
   selectedStatus: string = 'all';
   filterPeriodStart: Date | null = null;
   filterPeriodEnd: Date | null = null;
@@ -104,15 +107,20 @@ export class Reporting implements OnInit {
 
   private initializeUserRole() {
     const role = localStorage.getItem('role');
-    const userId = localStorage.getItem('id');
+    const storedId =
+      localStorage.getItem('employeeId') ||
+      localStorage.getItem('id') ||
+      localStorage.getItem('userId');
     this.userRole = role || '';
-    this.currentUserId = userId || '';
+    this.currentUserId = storedId || '';
     this.isAdmin = this.userRole === 'admin';
     this.isUser = this.userRole === 'user';
   }
 
   private async loadData() {
     this.isLoading = true;
+    this.cdr.detectChanges();
+
     try {
       if (this.isUser) {
         await this.loadUserReports();
@@ -125,6 +133,7 @@ export class Reporting implements OnInit {
       this.showError('Failed to load data');
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -138,8 +147,17 @@ export class Reporting implements OnInit {
 
   private async loadUserReports() {
     try {
-      const data = await this.reportingService.getAllReports();
-      this.userReports = Array.isArray(data) ? data : [];
+      const data = await this.reportingService.getAllReports({ userId: this.currentUserId, employeeId: this.currentUserId });
+      const reports = Array.isArray(data) ? data : [];
+      this.userReports = reports.map((r: any) => {
+        const rawUserId = r.userId ?? r.employeeId ?? r.ownerId ?? (r.user && r.user.id) ?? '';
+        const userName = r.userName ?? (r.user && r.user.name) ?? r.employeeName ?? '';
+        return {
+          ...r,
+          userId: rawUserId,
+          userName: userName
+        };
+      });
     } catch (error) {
       this.showError('Could not load your reports');
       this.userReports = [];
@@ -148,6 +166,7 @@ export class Reporting implements OnInit {
 
   private async loadAllReports() {
     this.isLoading = true;
+    this.cdr.detectChanges();
 
     try {
       const filters: any = {};
@@ -173,8 +192,6 @@ export class Reporting implements OnInit {
         filters.periodEnd = this.filterPeriodEnd.toISOString().split('T')[0];
       }
 
-      console.log("vsirep",this.reportingService.getAllReports(filters));
-
       const [users, data] = await Promise.all([
         await this.authService.getAllEmployees(),
         await this.reportingService.getAllReports(filters)
@@ -183,15 +200,22 @@ export class Reporting implements OnInit {
       this.employees = Array.isArray(users) ? users : [];
       const reportsList = Array.isArray(data) ? data : [];
 
-      this.allReports = reportsList.map(report => {
-        const user = this.employees.find(emp => String(emp.id) === String(report.userId));
+      this.allReports = reportsList.map((report: any) => {
+        const rawUserId = report.userId ?? report.employeeId ?? report.ownerId ?? (report.user && report.user.id) ?? '';
+        const user = this.employees.find(emp => String(emp.id) === String(rawUserId) || String(emp.id) === String(report.userId) || String(emp.id) === String(report.employeeId));
+        const userName = report.userName ?? (report.user && report.user.name) ?? (user ? user.name : 'Unknown User');
         return {
           ...report,
-          userName: user ? user.name : 'Unknown User'
+          userId: rawUserId || report.userId || report.employeeId || '',
+          userName: userName
         };
       });
 
-      console.log('Reporting Data Merged:', this.allReports);
+      this.allReportsFiltered = [...this.allReports];
+
+      if (this.selectedEmployeeName && this.selectedEmployeeName.trim()) {
+        this.applyEmployeeNameFilter();
+      }
 
     } catch (error) {
       console.error('Error loading reports:', error);
@@ -199,6 +223,7 @@ export class Reporting implements OnInit {
       this.allReports = [];
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -213,7 +238,6 @@ export class Reporting implements OnInit {
   }
 
   showGenerateDialog() {
-    console.log('Opening Generate Dialog - isAdmin:', this.isAdmin, 'employees:', this.employees);
     this.isEdit = false;
     this.isManualReport = false;
     this.currentReport = {
@@ -232,7 +256,6 @@ export class Reporting implements OnInit {
   }
 
   showManualReportDialog() {
-    console.log('Opening Manual Dialog - isAdmin:', this.isAdmin, 'employees:', this.employees);
     this.isEdit = false;
     this.isManualReport = true;
     this.currentReport = {
@@ -281,9 +304,6 @@ export class Reporting implements OnInit {
       notes: this.currentReport.notes || ''
     };
 
-    console.log('Current Report:', this.currentReport);
-    console.log('isAdmin:', this.isAdmin, 'isEdit:', this.isEdit);
-
     if (this.isAdmin && !this.isEdit) {
       const userId = this.currentReport.userId ? String(this.currentReport.userId) : '';
       if (!userId || userId === '' || userId === 'undefined' || userId === 'null') {
@@ -291,13 +311,10 @@ export class Reporting implements OnInit {
         return;
       }
       payload.userId = userId;
-      console.log('Setting admin userId:', payload.userId);
     } else if (this.isUser) {
       payload.userId = this.currentUserId;
-      console.log('Setting user userId:', payload.userId);
     }
 
-    console.log('Final payload:', payload);
 
     try {
       if (this.isEdit) {
@@ -362,11 +379,13 @@ export class Reporting implements OnInit {
     if (this.employees.length === 0) {
       await this.loadEmployeesForDropdown();
     }
+    await new Promise<void>(res => setTimeout(res, 0));
     await this.loadAllReports();
   }
 
   async resetFilters() {
     this.selectedEmployeeId = '';
+    this.selectedEmployeeName = '';
     this.selectedStatus = 'all';
     this.filterPeriodStart = null;
     this.filterPeriodEnd = null;
@@ -374,6 +393,16 @@ export class Reporting implements OnInit {
       await this.loadEmployeesForDropdown();
     }
     await this.loadAllReports();
+  }
+
+  applyEmployeeNameFilter() {
+    const searchTerm = (this.selectedEmployeeName || '').toLowerCase().trim();
+
+    if (!searchTerm) {
+      this.allReportsFiltered = [...this.allReports];
+    } else {
+      this.allReportsFiltered = this.allReports.filter(r => (r.userName || '').toLowerCase().includes(searchTerm));
+    }
   }
 
   async syncLogs() {
@@ -411,7 +440,6 @@ export class Reporting implements OnInit {
   }
 
   private getEmployeeName(userId: string | number): string {
-    console.log('Looking up name for userId:', userId);
     const id = String(userId);
     const employee = this.employees.find(emp => String(emp.id) === id);
     return employee ? employee.name : userId.toString();

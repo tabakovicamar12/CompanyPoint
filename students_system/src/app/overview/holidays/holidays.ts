@@ -10,7 +10,7 @@ import { TextareaModule } from 'primeng/textarea';
 import { ToastModule } from 'primeng/toast';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Menu } from '../menu/menu';
+import { ChangeDetectorRef } from '@angular/core';
 import { RouterModule } from "@angular/router";
 import { InputTextModule } from 'primeng/inputtext';
 import { CardModule } from 'primeng/card';
@@ -23,7 +23,7 @@ interface HolidayRequest {
   startDate: Date | string;
   endDate: Date | string;
   type: string;
-  comment: string;
+  reviewComment: string;
   status?: string;
   reason?: string;
   numberOfDays?: number;
@@ -39,7 +39,7 @@ interface HolidayRequest {
     TableModule, ButtonModule, DialogModule, DatePickerModule,
     CommonModule, FormsModule, TextareaModule, ToastModule,
     RouterModule, InputTextModule, CardModule, SelectModule, InputNumberModule, TagModule
-],
+  ],
   templateUrl: './holidays.html',
   styleUrl: './holidays.css',
 })
@@ -47,6 +47,7 @@ export class Holidays implements OnInit {
   private holidayService = inject(HolidayService);
   private authService = inject(AuthService);
   private messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
 
   userRole: string = '';
   isAdmin: boolean = false;
@@ -58,7 +59,9 @@ export class Holidays implements OnInit {
   userFilterStatus: string = 'all';
 
   allRequests: any[] = [];
+  allRequestsFiltered: any[] = [];
   selectedEmployeeId: string = '';
+  selectedEmployeeName: string = '';
   selectedStatus: string = 'all';
   filterStartDate: Date | null = null;
   filterEndDate: Date | null = null;
@@ -92,7 +95,7 @@ export class Holidays implements OnInit {
     startDate: new Date(),
     endDate: new Date(),
     type: '',
-    comment: '',
+    reviewComment: '',
   };
 
   reviewRequest: any = {
@@ -119,6 +122,7 @@ export class Holidays implements OnInit {
 
   private async loadData() {
     this.isLoading = true;
+    this.cdr.detectChanges();
     try {
       if (this.isUser) {
         await Promise.all([
@@ -135,7 +139,8 @@ export class Holidays implements OnInit {
       console.error('Error in loadData:', error);
       this.showError('Failed to load data');
     } finally {
-      this.isLoading = false;
+      this.isLoading = false; 
+      this.cdr.detectChanges();
     }
   }
 
@@ -157,7 +162,21 @@ export class Holidays implements OnInit {
       };
       const backendStatus = statusMap[this.userFilterStatus] || this.userFilterStatus;
       const data = await this.holidayService.getMyRequests(backendStatus);
-      this.userRequests = Array.isArray(data) ? data : [];
+      const list = Array.isArray(data) ? data : [];
+
+      this.userRequests = list.map((r: any) => {
+        let normalizedType = r.type ?? r.holidayType ?? r.requestType ?? r.reason ?? '';
+        const match = this.requestTypes.find(rt => (rt.value || '').toString().toLowerCase() === (normalizedType || '').toString().toLowerCase() || (rt.label || '').toString().toLowerCase() === (normalizedType || '').toString().toLowerCase());
+        if (match) normalizedType = match.value;
+
+        const normalizedComment = r.comment ?? r.reviewComment ?? r.reason ?? '';
+        return {
+          ...r,
+          type: normalizedType,
+          reason: normalizedComment,
+          reviewComment: r.reviewComment ?? '',
+        };
+      });
     } catch (error) {
       this.showError('Could not load your holiday requests');
       this.userRequests = [];
@@ -167,11 +186,8 @@ export class Holidays implements OnInit {
   private async loadUserStats() {
     try {
       const data = await this.holidayService.getMyStats();
-      console.log('Raw stats data:', data);
       this.userStats = data || {};
-      console.log('User stats loaded:', this.userStats);
     } catch (error) {
-      console.error('Failed to load stats:', error);
       this.userStats = {};
     }
   }
@@ -183,21 +199,27 @@ export class Holidays implements OnInit {
       startDate: new Date(),
       endDate: new Date(),
       type: '',
-      comment: '',
+      reviewComment: '',
     };
     this.displayDialog = true;
   }
 
   editRequest(request: any) {
     this.isEdit = true;
+    let normalizedType = request.type ?? request.holidayType ?? request.requestType ?? request.reason ?? '';
+    const match = this.requestTypes.find(rt => (rt.value || '').toString().toLowerCase() === (normalizedType || '').toString().toLowerCase() || (rt.label || '').toString().toLowerCase() === (normalizedType || '').toString().toLowerCase());
+    if (match) normalizedType = match.value;
+    const normalizedComment = request.reason ?? request.comment ?? request.reviewComment ?? '';
+
     this.currentRequest = {
       id: request.id,
       startDate: new Date(request.startDate || request.start_date),
       endDate: new Date(request.endDate || request.end_date),
-      type: request.type || '',
-      comment: request.reason || request.comment || '',
+      type: normalizedType,
+      reviewComment: normalizedComment,
     };
-    console.log('Editing request:', { type: this.currentRequest.type, comment: this.currentRequest.comment });
+
+    this.cdr.detectChanges();
     this.displayDialog = true;
   }
 
@@ -214,11 +236,11 @@ export class Holidays implements OnInit {
     const payload: any = {
       startDate: ensureDate(this.currentRequest.startDate),
       endDate: ensureDate(this.currentRequest.endDate),
-      type: this.currentRequest.type
+      reason: this.currentRequest.type
     };
 
-    if (this.currentRequest.comment) {
-      payload.comment = this.currentRequest.comment;
+    if (this.currentRequest.reviewComment) {
+      payload.reviewComment = this.currentRequest.reviewComment;
     }
 
     try {
@@ -227,7 +249,6 @@ export class Holidays implements OnInit {
         this.showSuccess('Holiday request updated successfully');
       } else {
         await this.holidayService.createRequest(payload);
-        console.log('Create request payload:', payload);
         this.showSuccess('Holiday request created successfully');
       }
 
@@ -258,6 +279,7 @@ export class Holidays implements OnInit {
   async changeStatusFilter(status: string) {
     this.userFilterStatus = status;
     await this.loadUserRequests();
+    this.cdr.detectChanges();
   }
 
   private async loadAllRequests() {
@@ -266,6 +288,9 @@ export class Holidays implements OnInit {
 
       if (this.selectedEmployeeId) {
         filters.userId = this.selectedEmployeeId;
+      }
+
+      if (this.selectedEmployeeName && this.selectedEmployeeName.trim()) {
       }
 
       if (this.selectedStatus !== 'all') {
@@ -280,25 +305,74 @@ export class Holidays implements OnInit {
         filters.endDate = this.filterEndDate.toISOString().split('T')[0];
       }
 
-      const data = await this.holidayService.getAllRequestsAdmin(filters);
-      this.allRequests = Array.isArray(data) ? data : [];
+      const [users, data] = await Promise.all([
+        this.authService.getAllEmployees(),
+        this.holidayService.getAllRequestsAdmin(filters)
+      ]);
+
+      const usersList = Array.isArray(users) ? users : [];
+      const requestsList = Array.isArray(data) ? data : [];
+
+      this.allRequests = requestsList.map(req => {
+        const empId = req.userId ?? req.employee_id ?? req.employeeId ?? null;
+        const user = usersList.find(u => u && (String(u.id) === String(empId) || Number(u.id) === Number(empId)));
+        const resolvedName = user ? user.name : (req.userName || req.employeeName || req.employee_name || 'Unknown');
+
+        let normalizedType = req.type ?? req.holidayType ?? req.requestType ?? req.reason ?? '';
+        const match = this.requestTypes.find(rt => (rt.value || '').toString().toLowerCase() === (normalizedType || '').toString().toLowerCase() || (rt.label || '').toString().toLowerCase() === (normalizedType || '').toString().toLowerCase());
+        if (match) normalizedType = match.value;
+
+        return {
+          ...req,
+          type: normalizedType,
+          userId: empId ?? req.userId,
+          employee_id: empId ?? req.employee_id,
+          employeeName: resolvedName,
+          employee_name: resolvedName,
+          userName: resolvedName
+        };
+      });
+
+      this.allRequestsFiltered = [...this.allRequests];
+
+      if (this.selectedEmployeeName && this.selectedEmployeeName.trim()) {
+        this.applyEmployeeNameFilter();
+      }
     } catch (error) {
       console.error('Error loading requests:', error);
       this.showError('Failed to load holiday requests');
       this.allRequests = [];
+      this.allRequestsFiltered = [];
     }
   }
 
   async applyAdminFilters() {
+    await new Promise<void>(res => setTimeout(res, 0));
+    this.cdr.detectChanges();
     await this.loadAllRequests();
   }
 
   async resetAdminFilters() {
     this.selectedEmployeeId = '';
+    this.selectedEmployeeName = '';
     this.selectedStatus = 'all';
     this.filterStartDate = null;
     this.filterEndDate = null;
     await this.loadAllRequests();
+  }
+
+  applyEmployeeNameFilter() {
+    const searchTerm = (this.selectedEmployeeName || '').toLowerCase().trim();
+
+    if (!searchTerm) {
+      this.allRequestsFiltered = [...this.allRequests];
+    } else {
+      this.allRequestsFiltered = this.allRequests.filter(req =>
+        (req.userName || req.employeeName || req.employee_name || '')
+          .toLowerCase()
+          .includes(searchTerm)
+      );
+    }
   }
 
   openReviewDialog(request: any) {
@@ -341,7 +415,6 @@ export class Holidays implements OnInit {
         return;
       }
       this.selectedAdminStats = await this.holidayService.getUserStatsByIdAdmin(employeeId);
-      console.log('Employee stats loaded:', this.selectedAdminStats);
       this.showSuccess('Employee statistics loaded successfully');
     } catch (error) {
       console.error('Failed to load employee stats:', error);

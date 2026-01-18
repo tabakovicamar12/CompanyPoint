@@ -15,5 +15,39 @@ label {
 
 .mid-button-report{
     margin-left: 10px;
-    margin-left: 10px;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.header-left .page-title {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #111827;
+}
+
+.header-actions p-button {
+    margin-left: 0.5rem;
+}
+
+.work-card .p-datatable .p-datatable-tbody > tr > td {
+    vertical-align: middle;
+}
+
+.work-card code.text-xs {
+    font-size: 0.78rem;
+    background: transparent;
+}
+
+:host ::ng-deep .p-dialog .p-button {
+    min-width: 100px;
+}
+
+@media (max-width: 640px) {
+    .header-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .header-actions p-button { margin-left: 0 !important; }
 }

@@ -46,7 +46,6 @@ export class LogsService {
       const data = await response.json();
       const logs = Array.isArray(data) ? data : [];
       
-      // Map database fields to our interface
       return logs.map(log => ({
         _id: log._id,
         timestamp: log.timestamp,

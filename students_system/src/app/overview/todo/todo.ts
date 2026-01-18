@@ -75,10 +75,8 @@ export class Todo implements OnInit {
 
   async loadInitialData() {
     var employeeId = localStorage.getItem('employeeId');
-    console.log(employeeId);
     if (employeeId) {
       this.todoLists = await this.todoService.getToDoListByEmployee(employeeId);
-      console.log(this.todoLists);
     }
     if (this.todoLists.length > 0) {
       this.selectedList = this.todoLists[0];

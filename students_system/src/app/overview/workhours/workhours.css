@@ -214,3 +214,7 @@ h3 {
     margin: 0;
     padding: 0rem 0rem 0rem 1rem !important;
 }
+
+.flex.align-items-center.mb-1.ng-star-inserted {
+    align-items: baseline;
+}

@@ -41,7 +41,7 @@
                 </div>
             </p-card>
 
-            <div class="flex gap-2 mb-4">
+            <div class="flex gap-2 mb-4" style="margin-bottom: 10px">
                 <p-button label="All" severity="secondary" [text]="userFilterStatus === 'all'"
                     (onClick)="changeStatusFilter('all')"></p-button>
                 <p-button label="Pending" severity="warn" [text]="userFilterStatus === 'pending'"
@@ -107,16 +107,55 @@
                     </div>
                 </ng-template>
 
-                <div class="grid flex flex-wrap gap-4 justify-content-start mb-4">
+                <div class="mb-4" *ngIf="selectedAdminStats">
+                    <ng-template pTemplate="header">
+                        <div style="background-color: #f8f9fa;">
+                            <h3 style="padding: 20px; margin: 0;">Employee Holiday Balance</h3>
+                        </div>
+                    </ng-template>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="stat-box">
+                            <div class="stat-value">{{ selectedAdminStats.approved || selectedAdminStats.total_days || 0
+                                }}
+                            </div>
+                            <div class="stat-label">Approved</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">{{ selectedAdminStats.approvedDays || selectedAdminStats.used_days
+                                || 0 }}
+                            </div>
+                            <div class="stat-label">Approved Days</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">{{ selectedAdminStats.pending || selectedAdminStats.remaining_days
+                                || 0 }}</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">{{ selectedAdminStats.rejected || selectedAdminStats.pending_days ||
+                                0 }}</div>
+                            <div class="stat-label">Rejected</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">{{ selectedAdminStats.totalRequested ||
+                                selectedAdminStats.pending_days ||
+                                0 }}</div>
+                            <div class="stat-label">Total Requested</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid flex flex-wrap mt-2 gap-4 justify-content-start mb-4">
                     <div class="field flex flex-column align-items-start md:w-15rem">
-                        <label for="empId" class="font-bold text-sm text-700 mb-2">Employee ID</label>
-                        <input id="empId" pInputText [(ngModel)]="selectedEmployeeId" type="text" class="w-full"
-                            placeholder="Search by ID" />
+                        <label for="empName" class="font-bold text-sm text-700 mb-2">Employee Name</label>
+                        <input id="empName" pInputText [(ngModel)]="selectedEmployeeName"
+                            (ngModelChange)="applyEmployeeNameFilter()" type="text" class="w-full"
+                            placeholder="Search by name..." />
                     </div>
 
                     <div class="field flex flex-column align-items-start md:w-15rem">
                         <label for="status" class="font-bold text-sm text-700 mb-2">Status</label>
-                        <p-select id="status" [options]="statusOptions" [(ngModel)]="selectedStatus" optionLabel="label"
+                        <p-select id="status" [options]="statusOptions" (onChange)="applyAdminFilters()" [(ngModel)]="selectedStatus" optionLabel="label"
                             optionValue="value" placeholder="Select Status" styleClass="w-full dialog-input"
                             appendTo="body">
                         </p-select>
@@ -124,7 +163,7 @@
 
                     <div class="field flex flex-column align-items-start md:w-15rem">
                         <label for="fromDate" class="font-bold text-sm text-700 mb-2">From Date</label>
-                        <p-datepicker id="fromDate" [(ngModel)]="filterStartDate" dateFormat="yy-mm-dd"
+                        <p-datepicker id="fromDate" (onChange)="applyAdminFilters()" [(ngModel)]="filterStartDate" dateFormat="yy-mm-dd"
                             [showIcon]="true" styleClass="w-full" inputStyleClass="w-full"
                             placeholder="Select start date">
                         </p-datepicker>
@@ -132,7 +171,7 @@
 
                     <div class="field flex flex-column align-items-start md:w-15rem">
                         <label for="toDate" class="font-bold text-sm text-700 mb-2">To Date</label>
-                        <p-datepicker id="toDate" [(ngModel)]="filterEndDate" dateFormat="yy-mm-dd" [showIcon]="true"
+                        <p-datepicker id="toDate" (onChange)="applyAdminFilters()" [(ngModel)]="filterEndDate" dateFormat="yy-mm-dd" [showIcon]="true"
                             styleClass="w-full" inputStyleClass="w-full" placeholder="Select end date">
                         </p-datepicker>
                     </div>
@@ -146,7 +185,7 @@
                         (onClick)="refreshAdminData()"></p-button>
                 </div>
 
-                <p-table [value]="allRequests" [rows]="15" [paginator]="true" responsiveLayout="scroll"
+                <p-table [value]="allRequestsFiltered" [rows]="15" [paginator]="true" responsiveLayout="scroll"
                     [loading]="isLoading" styleClass="p-datatable-striped">
                     <ng-template pTemplate="header">
                         <tr>
@@ -197,36 +236,6 @@
                     </ng-template>
                 </p-table>
             </p-card>
-
-            <p-card class="mt-4" *ngIf="selectedAdminStats">
-                <ng-template pTemplate="header">
-                    <div style="background-color: #f8f9fa;">
-                        <h3 style="padding: 20px; margin: 0;">Employee Holiday Balance</h3>
-                    </div>
-                </ng-template>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="stat-box">
-                        <div class="stat-value">{{ selectedAdminStats.totalDays || selectedAdminStats.total_days || 0 }}
-                        </div>
-                        <div class="stat-label">Total Days</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value">{{ selectedAdminStats.usedDays || selectedAdminStats.used_days || 0 }}
-                        </div>
-                        <div class="stat-label">Used Days</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value">{{ selectedAdminStats.remainingDays || selectedAdminStats.remaining_days
-                            || 0 }}</div>
-                        <div class="stat-label">Remaining Days</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-value">{{ selectedAdminStats.pendingDays || selectedAdminStats.pending_days ||
-                            0 }}</div>
-                        <div class="stat-label">Pending Days</div>
-                    </div>
-                </div>
-            </p-card>
         </ng-container>
 
     </div>
@@ -267,7 +276,7 @@
                 <label for="comment" class="font-bold text-sm text-700">
                     Comment (Optional)
                 </label>
-                <textarea pInputTextarea id="comment" [(ngModel)]="currentRequest.comment" rows="4"
+                <textarea pInputTextarea id="comment" [(ngModel)]="currentRequest.reviewComment" rows="4"
                     class="dialog-textarea" placeholder="Add any additional comments...">
                 </textarea>
             </div>

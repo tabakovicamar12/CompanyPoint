@@ -29,6 +29,24 @@ p-avatar.avatar.p-avatar.p-avatar-circle.p-avatar-image.p-component {
     gap: 16px !important;
 }
 
+::ng-deep .menu ::ng-deep .p-menubar .p-menuitem-link.p-highlight .p-menuitem-text,
+::ng-deep .menu ::ng-deep .p-menubar .p-menuitem-link[aria-current="true"] .p-menuitem-text,
+::ng-deep .menu ::ng-deep .p-menubar .p-menuitem-link.p-state-active .p-menuitem-text {
+    color: #594859 !important;
+    font-weight: 700 !important;
+}
+
+::ng-deep .menu ::ng-deep .p-menubar .p-menuitem-link.p-highlight,
+::ng-deep .menu ::ng-deep .p-menubar .p-menuitem-link[aria-current="true"],
+::ng-deep .menu ::ng-deep .p-menubar .p-menuitem-link.p-state-active {
+    background: rgba(255,255,255,0.92) !important;
+    border-radius: 6px;
+}
+
+::ng-deep .p-menubar-item-label:active {
+    color: black !important;
+}
+
 ::ng-deep .p-menubar-start {
     margin-right: 3rem;
 }

@@ -101,6 +101,7 @@ export class EmployeeComponent implements OnInit {
 
   private async loadData() {
     this.isLoading = true;
+    this.cdr.detectChanges();
     try {
       if (this.isAdmin) {
         await this.loadAllEmployees();
@@ -110,6 +111,7 @@ export class EmployeeComponent implements OnInit {
       this.showError('Failed to load data');
     } finally {
       this.isLoading = false;
+      this.cdr.detectChanges();
     }
   }
 
@@ -274,7 +276,6 @@ export class EmployeeComponent implements OnInit {
 
   async loadLogs() {
     try {
-      // Veći raspon - od 2025 do 2027
       const from = '2025-01-01';
       const to = '2027-12-31';
 

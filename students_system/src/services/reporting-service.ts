@@ -65,8 +65,18 @@ export class ReportingService {
     return await response.json();
   }
 
-  async getAllReports(userId?: string): Promise<Report[]> {
-    const query = userId ? `?userId=${userId}` : '';
+  async getAllReports(userIdOrFilters?: string | Record<string, any>): Promise<Report[]> {
+    let query = '';
+    if (typeof userIdOrFilters === 'string' && userIdOrFilters) {
+      query = `?userId=${encodeURIComponent(userIdOrFilters)}`;
+    } else if (userIdOrFilters && typeof userIdOrFilters === 'object') {
+      const params = Object.entries(userIdOrFilters)
+        .filter(([_, v]) => v !== undefined && v !== null && v !== '')
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+        .join('&');
+      query = params ? `?${params}` : '';
+    }
+
     const response = await fetch(`${this.url}/reporting${query}`, {
       method: 'GET',
       headers: this.getHeaders()

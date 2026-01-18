@@ -132,7 +132,6 @@ export class TableComponent {
     this.hideDialog();
     this.selectedCourses = [];
     this.loadEmployeeLazy(null);
-    console.log(this.data_add);
   }
 
   generateId() {
