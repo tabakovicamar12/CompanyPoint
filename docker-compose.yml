@@ -207,6 +207,8 @@ services:
       TODOCHART_SERVICE_URL: http://todochart-service:8080
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
+      STATISTICS_URL: https://companypoint.onrender.com/stats
+      STATS_API_KEY: stats_key_123
     depends_on:
       - holiday-db
       - auth-api

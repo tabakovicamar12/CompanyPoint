@@ -6,7 +6,9 @@ import holidayRoutes from './routes/holiday.routes';
 import logRoutes from './routes/log.routes';
 import { correlationIdMiddleware } from './middleware/correlationId.middleware';
 import { loggingMiddleware } from './middleware/logging.middleware';
+import { statisticsReportingMiddleware } from './middleware/statistics.middleware';
 
+// Statistics middleware added - timestamp: 2026-01-18T16:30:00
 dotenv.config();
 
 const app = express();
@@ -29,8 +31,9 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(correlationIdMiddleware);
 
-
 app.use(loggingMiddleware);
+
+app.use(statisticsReportingMiddleware);
 
 app.get('/health', (req: Request, res: Response) => {
     res.json({ 
