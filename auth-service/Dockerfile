@@ -7,7 +7,7 @@ COPY .env ./
 COPY server.js ./
 COPY src/ ./src/
 
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 EXPOSE 3000
 

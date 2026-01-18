@@ -1,6 +1,8 @@
 import User from '../models/user.model.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { sendLog } from '../logger.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const generateToken = (user) => {
     return jwt.sign({
@@ -32,12 +34,17 @@ const protect = (req, res, next) => {
 
 /**
  * @route POST /authService/register
- * @desc 1. POST: Registracija uporabnika
  */
 export const registerUser = async (req, res) => {
-    console.log(">>> DEBUG - REGISTER CALLED");
-    console.log(">>> REQ BODY:", req.body);
     const { email, password, role } = req.body;
+    const correlationId = req.headers['x-correlation-id'] || uuidv4();
+    
+    await sendLog({
+        type: 'INFO',
+        url: req.originalUrl,
+        correlationId,
+        message: `Klic storitve REGISTER za ${email}`
+    });
 
     try {
         const existingUser = await User.findOne({ email });
@@ -55,6 +62,7 @@ export const registerUser = async (req, res) => {
         res.status(201).json({ message: 'Registracija uspešna.', user: { id: user._id, name: user.name, role: user.role }, token });
 
     } catch (error) {
+        await sendLog({ type: 'ERROR', url: req.originalUrl, correlationId, message: `Napaka pri registraciji: ${error.message}` });
         console.error('Napaka pri registraciji:', error);
         res.status(500).json({ error: 'Napaka strežnika.' });
     }
@@ -62,10 +70,17 @@ export const registerUser = async (req, res) => {
 
 /**
  * @route POST /authService/login
- * @desc 2. POST: Prijava uporabnika
  */
 export const loginUser = async (req, res) => {
     const { email, password } = req.body;
+    const correlationId = req.headers['x-correlation-id'] || uuidv4();
+
+    await sendLog({
+        type: 'INFO',
+        url: req.originalUrl,
+        correlationId,
+        message: `Poskus prijave za uporabnika: ${email}`
+    });
 
     try {
         const user = await User.findOne({ email });
@@ -76,9 +91,11 @@ export const loginUser = async (req, res) => {
 
             return res.status(200).json({ message: 'Prijava uspešna.', user: userResponse, token });
         } else {
+            await sendLog({ type: 'WARN', url: req.originalUrl, correlationId, message: `Neuspešna prijava za: ${email}` });
             return res.status(401).json({ error: 'Neveljavni e-poštni naslov ali geslo.' });
         }
     } catch (error) {
+        await sendLog({ type: 'ERROR', url: req.originalUrl, correlationId, message: `Napaka pri prijavi: ${error.message}` });
         console.error('Napaka pri prijavi:', error);
         res.status(500).json({ error: 'Napaka strežnika.' });
     }
@@ -86,9 +103,11 @@ export const loginUser = async (req, res) => {
 
 /**
  * @route GET /authService/validateUser
- * @desc 1. GET: Preveri vlogo uporabnika (zaščitena pot)
  */
 export const validateUser = [protect, async (req, res) => {
+    const correlationId = req.headers['x-correlation-id'] || uuidv4();
+    await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: `Validacija žetona za uporabnika ID: ${req.user.id}` });
+    
     res.status(200).json({
         message: 'Žeton veljaven.',
         user: { id: req.user.id, role: req.user.role }
@@ -97,20 +116,24 @@ export const validateUser = [protect, async (req, res) => {
 
 /**
  * @route GET /authService/roles
- * @desc 2. GET: Pridobi seznam vseh možnih vlog
  */
-export const getAllRoles = (req, res) => {
+export const getAllRoles = async (req, res) => {
+    const correlationId = req.headers['x-correlation-id'] || uuidv4();
+    await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: "Pridobivanje seznama vlog" });
+    
     const roles = ['user', 'admin'];
     res.status(200).json({ roles });
 };
 
 /**
  * @route PUT /authService/updatePassword
- * @desc 1. PUT: Posodobi geslo (zaščitena pot)
  */
 export const updatePassword = [protect, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     const userId = req.user.id;
+    const correlationId = req.headers['x-correlation-id'] || uuidv4();
+
+    await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: `Posodobitev gesla za uporabnika: ${userId}` });
 
     try {
         const user = await User.findById(userId);
@@ -125,22 +148,27 @@ export const updatePassword = [protect, async (req, res) => {
             return res.status(401).json({ error: 'Trenutno geslo je napačno.' });
         }
     } catch (error) {
-        console.error('Napaka pri posodabljanju gesla:', error);
+        await sendLog({ type: 'ERROR', url: req.originalUrl, correlationId, message: `Napaka pri posodobitvi gesla: ${error.message}` });
+        console.error('Napaka pri posodobljanju gesla:', error);
         res.status(500).json({ error: 'Napaka strežnika.' });
     }
 }];
 
 /**
  * @route PUT /authService/setRole/:userId
- * @desc 2. PUT: Nastavi vlogo uporabniku (zaščitena in potrebna admin vloga)
  */
 export const setRole = [protect, async (req, res) => {
+    const correlationId = req.headers['x-correlation-id'] || uuidv4();
+    
     if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Dostop zavrnjen. Zahtevana je admin vloga.' });
     }
 
     const { role } = req.body;
     const userId = req.params.userId;
+    
+    await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: `Admin ${req.user.id} nastavlja vlogo ${role} za uporabnika ${userId}` });
+
     const validRoles = ['user', 'admin', 'guest'];
 
     if (!validRoles.includes(role)) {
@@ -157,6 +185,7 @@ export const setRole = [protect, async (req, res) => {
 
         res.status(200).json({ message: `Vloga za uporabnika ${userId} nastavljena na ${user.role}.` });
     } catch (error) {
+        await sendLog({ type: 'ERROR', url: req.originalUrl, correlationId, message: `Napaka pri nastavljanju vloge: ${error.message}` });
         console.error('Napaka pri nastavljanju vloge:', error);
         res.status(500).json({ error: 'Napaka strežnika.' });
     }
@@ -164,15 +193,16 @@ export const setRole = [protect, async (req, res) => {
 
 /**
  * @route GET /authService/getUserData
- * @desc Pridobi podatke user glede na token
  */
 export const getUserData = [protect, async (req, res) => {
+    const correlationId = req.headers['x-correlation-id'] || uuidv4();
     try {
         const user = await User.findById(req.user.id).select('-password');
-
         if (!user) {
             return res.status(404).json({ error: 'Uporabnika ni mogoče najti.' });
         }
+
+        await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: `Pridobljeni podatki za ${user.email}` });
 
         res.status(200).json({
             email: user.email,
@@ -180,23 +210,28 @@ export const getUserData = [protect, async (req, res) => {
             role: user.role
         });
     } catch (error) {
+        await sendLog({ type: 'ERROR', url: req.originalUrl, correlationId, message: `Napaka pri getUserData: ${error.message}` });
         res.status(500).json({ error: 'Napaka strežnika.' });
     }
 }];
 
 /**
  * @route DELETE /authService/unregister/:userId
- * @desc 2. DELETE: Izbriše račun uporabnika (potrebna admin vloga)
  */
 export const unregisterUser = [protect, async (req, res) => {
+    const correlationId = req.headers['x-correlation-id'] || uuidv4();
+    
     if (req.user.role !== 'admin' && req.user.id !== req.params.userId) {
         return res.status(403).json({ error: 'Dostop zavrnjen. Lahko izbrišete le svoj račun ali potrebujete admin vlogo.' });
     }
+
+    await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: `Brisanje uporabnika: ${req.params.userId}` });
 
     try {
         await User.findByIdAndDelete(req.params.userId);
         res.status(200).json({ message: 'Uporabnik uspešno izbrisan.' });
     } catch (error) {
+        await sendLog({ type: 'ERROR', url: req.originalUrl, correlationId, message: `Napaka pri brisanju: ${error.message}` });
         console.error('Napaka pri brisanju uporabnika:', error);
         res.status(500).json({ error: 'Napaka strežnika.' });
     }
@@ -204,12 +239,15 @@ export const unregisterUser = [protect, async (req, res) => {
 
 /**
  * @route GET /authService/users
- * @desc Vrne vse uporabnike (potrebna admin vloga)
  */
 export const getAllUsers = [protect, async (req, res) => {
+    const correlationId = req.headers['x-correlation-id'] || uuidv4();
+    
     if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Dostop zavrnjen. Zahtevana je admin vloga.' });
     }
+
+    await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: "Admin pridobiva seznam vseh uporabnikov" });
 
     try {
         const users = await User.find({}).select('_id email role');
@@ -222,6 +260,7 @@ export const getAllUsers = [protect, async (req, res) => {
 
         res.status(200).json(formattedUsers);
     } catch (error) {
+        await sendLog({ type: 'ERROR', url: req.originalUrl, correlationId, message: `Napaka pri getAllUsers: ${error.message}` });
         console.error('Napaka pri pridobivanju uporabnikov:', error);
         res.status(500).json({ error: 'Napaka strežnika.' });
     }

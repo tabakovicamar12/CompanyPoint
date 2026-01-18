@@ -25,6 +25,11 @@ services:
     environment:
       MONGO_URI: mongodb://auth_user:authcompnypoint1@auth-db:27017/authdb?authSource=admin
       JWT_SECRET: thIsismysup€rsafes3cretkey123!
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672
+      SERVICE_NAME: auth-service
+      LOG_EXCHANGE: logs.exchange
+      LOG_ROUTING_KEY: auth.logs
+      LOG_QUEUE: auth.logs.queue
     depends_on:
       - auth-db
     command: ["npm", "start"]
@@ -306,6 +311,22 @@ services:
       - statistics-db
     ports:
       - "5010:8080"
+
+# -------------------------
+# ANGULAR FRONTEND
+# -------------------------
+#  frontend:
+#    build:
+#      context: ./students_system 
+#      dockerfile: Dockerfile
+#    container_name: company-frontend
+#    restart: always
+#    ports:
+#      - "4200:80"
+#    depends_on:
+#      - auth-api
+#      - expense-api
+#      - workhours-api
 
 
 

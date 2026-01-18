@@ -110,19 +110,13 @@ router.put('/updatePassword', authController.updatePassword);
 
 /**
  * @swagger
- * /getAllUsers:
+ * /authService/getAllUsers:
  * get:
- * summary: Pridobi seznam vseh uporabnikov (samo za admine)
- * tags: [AuthService]
- * security:
- * - bearerAuth: []
+ * description: Pridobi vse uporabnike
+ * description: Ta pot je samo za admine
  * responses:
  * 200:
- * description: Seznam uporabnikov uspešno pridobljen
- * 401:
- * description: Neveljaven žeton
- * 403:
- * description: Dostop zavrnjen (niste admin)
+ * description: Uspešno
  */
 router.get('/getAllUsers', authController.getAllUsers);
 
