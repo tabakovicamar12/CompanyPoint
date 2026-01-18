@@ -86,6 +86,10 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: guest
       RABBITMQ_PASS: guest
+
+      # hardcoded statistics config
+      STATISTICS_URL: https://companypoint.onrender.com
+      STATS_API_KEY: stats_key_123
     depends_on:
       - expense-db
       - rabbitmq

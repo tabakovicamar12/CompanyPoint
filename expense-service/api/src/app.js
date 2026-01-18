@@ -8,6 +8,7 @@ const db = require('./db');
 
 const correlationIdMiddleware = require('./middleware/correlationId.middleware');
 const loggingMiddleware = require('./middleware/logging.middleware');
+const statsTrackingMiddleware = require('./middleware/statsTracking.middleware');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -18,6 +19,9 @@ app.use(express.json());
 
 app.use(correlationIdMiddleware);
 app.use(loggingMiddleware);
+
+// >>> DODANO: tracking v statistics-service (fire-and-forget po uspešnih klicih)
+app.use(statsTrackingMiddleware);
 
 /**
  * -------------------------
@@ -92,7 +96,6 @@ const swaggerSpec = swaggerJsdoc({
       },
     },
   },
-  // Najbolj robustno: swagger-jsdoc pars-a komentarje iz trenutne datoteke
   apis: [__filename],
 });
 
@@ -222,7 +225,7 @@ app.post('/expenses/bulk', async (req, res) => {
       const { expenseDate, category, amount, description } = exp;
 
       if (!expenseDate || !category || amount == null) {
-        continue; // skip invalid rows
+        continue;
       }
 
       const result = await db.query(
@@ -706,7 +709,6 @@ app.delete('/expenses/admin/delete/:id', requireAdmin, async (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
 
-  // publish error log
   const { publishLog } = require('./rabbitmq');
   publishLog({
     timestamp: new Date().toISOString(),
