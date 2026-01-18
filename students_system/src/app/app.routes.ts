@@ -29,7 +29,7 @@ export const routes: Routes = [
             {
                 path: 'statistics',
                 loadComponent: () => import('./overview/statistic-component/statistic-component').then(m => m.StatisticComponent),
-                data: { roles: ['admin'] }
+                data: { roles: ['user', 'admin'] }
             },
             {
                 path: 'profile',

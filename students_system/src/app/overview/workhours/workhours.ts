@@ -197,6 +197,7 @@ export class Workhours implements OnInit {
           }
           this.workService.logForEmployeeAdmin(payload);
           this.showSuccess('Work hours logged for employee');
+
         } else {
           this.workService.logWorkHours(payload);
           this.showSuccess('Work hours logged successfully');
@@ -217,6 +218,7 @@ export class Workhours implements OnInit {
       this.showError(error.message || 'Failed to save work entry.');
     }
   }
+
   async deleteWorkEntry(entryId: string) {
     if (confirm('Are you sure you want to delete this entry?')) {
       try {

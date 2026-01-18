@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { sendLog } from '../logger.js';
 import { v4 as uuidv4 } from 'uuid';
+import { trackStat } from '../statsLogger.js';
+
 
 const generateToken = (user) => {
     return jwt.sign({
@@ -38,7 +40,7 @@ const protect = (req, res, next) => {
 export const registerUser = async (req, res) => {
     const { email, password, role } = req.body;
     const correlationId = req.headers['x-correlation-id'] || uuidv4();
-    
+
     await sendLog({
         type: 'INFO',
         url: req.originalUrl,
@@ -52,12 +54,15 @@ export const registerUser = async (req, res) => {
             return res.status(409).json({ error: 'Uporabnik s tem e-poštnim naslovom že obstaja.' });
         }
 
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = new User({ email, password: hashedPassword, role });
         await user.save();
 
         user.name = user.email.split('@')[0];
         const token = generateToken(user);
+
+        await trackStat('POST /authService/register', token);
 
         res.status(201).json({ message: 'Registracija uspešna.', user: { id: user._id, name: user.name, role: user.role }, token });
 
@@ -89,6 +94,8 @@ export const loginUser = async (req, res) => {
             const token = generateToken(user);
             const userResponse = { id: user._id, name: user.name, role: user.role };
 
+            await trackStat('POST /authService/login', token);
+
             return res.status(200).json({ message: 'Prijava uspešna.', user: userResponse, token });
         } else {
             await sendLog({ type: 'WARN', url: req.originalUrl, correlationId, message: `Neuspešna prijava za: ${email}` });
@@ -107,7 +114,10 @@ export const loginUser = async (req, res) => {
 export const validateUser = [protect, async (req, res) => {
     const correlationId = req.headers['x-correlation-id'] || uuidv4();
     await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: `Validacija žetona za uporabnika ID: ${req.user.id}` });
-    
+
+    const systemToken = generateToken({ _id: 'system', name: 'AuthService', role: 'admin' });
+    await trackStat('GET /authService/validateUser', systemToken);
+
     res.status(200).json({
         message: 'Žeton veljaven.',
         user: { id: req.user.id, role: req.user.role }
@@ -120,7 +130,10 @@ export const validateUser = [protect, async (req, res) => {
 export const getAllRoles = async (req, res) => {
     const correlationId = req.headers['x-correlation-id'] || uuidv4();
     await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: "Pridobivanje seznama vlog" });
-    
+
+    const systemToken = generateToken({ _id: 'system', name: 'AuthService', role: 'admin' });
+    await trackStat('GET /authService/roles', systemToken);
+
     const roles = ['user', 'admin'];
     res.status(200).json({ roles });
 };
@@ -143,6 +156,9 @@ export const updatePassword = [protect, async (req, res) => {
             user.password = newHashedPassword;
             await user.save();
 
+            const token = req.headers.authorization.split(' ')[1];
+            await trackStat('PUT /authService/updatePassword', token);
+
             return res.status(200).json({ message: 'Geslo uspešno posodobljeno.' });
         } else {
             return res.status(401).json({ error: 'Trenutno geslo je napačno.' });
@@ -159,14 +175,14 @@ export const updatePassword = [protect, async (req, res) => {
  */
 export const setRole = [protect, async (req, res) => {
     const correlationId = req.headers['x-correlation-id'] || uuidv4();
-    
+
     if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Dostop zavrnjen. Zahtevana je admin vloga.' });
     }
 
     const { role } = req.body;
     const userId = req.params.userId;
-    
+
     await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: `Admin ${req.user.id} nastavlja vlogo ${role} za uporabnika ${userId}` });
 
     const validRoles = ['user', 'admin', 'guest'];
@@ -182,6 +198,9 @@ export const setRole = [protect, async (req, res) => {
         }
         user.role = role;
         await user.save();
+
+        const token = req.headers.authorization.split(' ')[1];
+        await trackStat('PUT /authService/updatePassword', token);
 
         res.status(200).json({ message: `Vloga za uporabnika ${userId} nastavljena na ${user.role}.` });
     } catch (error) {
@@ -204,6 +223,9 @@ export const getUserData = [protect, async (req, res) => {
 
         await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: `Pridobljeni podatki za ${user.email}` });
 
+        const systemToken = generateToken({ _id: 'system', name: 'AuthService', role: 'admin' });
+        await trackStat('GET /authService/getUserData', systemToken);
+
         res.status(200).json({
             email: user.email,
             name: user.email.split('@')[0],
@@ -220,7 +242,7 @@ export const getUserData = [protect, async (req, res) => {
  */
 export const unregisterUser = [protect, async (req, res) => {
     const correlationId = req.headers['x-correlation-id'] || uuidv4();
-    
+
     if (req.user.role !== 'admin' && req.user.id !== req.params.userId) {
         return res.status(403).json({ error: 'Dostop zavrnjen. Lahko izbrišete le svoj račun ali potrebujete admin vlogo.' });
     }
@@ -242,12 +264,16 @@ export const unregisterUser = [protect, async (req, res) => {
  */
 export const getAllUsers = [protect, async (req, res) => {
     const correlationId = req.headers['x-correlation-id'] || uuidv4();
-    
+
     if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Dostop zavrnjen. Zahtevana je admin vloga.' });
     }
 
     await sendLog({ type: 'INFO', url: req.originalUrl, correlationId, message: "Admin pridobiva seznam vseh uporabnikov" });
+
+    const systemToken = generateToken({ _id: 'system', name: 'AuthService', role: 'admin' });
+    await trackStat('GET /authService/getAllUsers', systemToken);
+
 
     try {
         const users = await User.find({}).select('_id email role');
@@ -257,6 +283,7 @@ export const getAllUsers = [protect, async (req, res) => {
             name: user.email.split('@')[0],
             role: user.role
         }));
+
 
         res.status(200).json(formattedUsers);
     } catch (error) {

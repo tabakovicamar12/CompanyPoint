@@ -1,12 +1,35 @@
-<div class="grid mb-4" *ngIf="statsData">
-    <div class="col-12 md:col-6 lg:col-4">
-        <p-card header="Total Amount">
-            <h2 class="text-primary">{{ statsData.totalAmount }}</h2>
-        </p-card>
+<div class="stats-container">
+    <div class="stats-grid" *ngIf="statsData && statsData.length > 0">
+        <div class="stat-card-wrapper" *ngFor="let stat of statsData">
+            <div class="stat-card">
+                <div class="stat-card-header">
+                    <div class="endpoint-info">
+                        <span class="endpoint-label">ENDPOINT</span>
+                        <div class="endpoint-name">
+                            {{ stat.endpoint.replace('/employeeService/', '') }}
+                        </div>
+                    </div>
+                    <div class="icon-box">
+                        <i class="pi pi-server"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card-body">
+                    <span class="count-value">{{ stat.count }}</span>
+                    <div class="count-label">Total Requests</div>
+                </div>
+
+                <div class="stat-card-footer">
+                    <i class="pi pi-circle-fill status-icon"></i>
+                    <span class="status-text">System Active</span>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="col-12 md:col-6 lg:col-4">
-        <p-card header="Total Count">
-            <h2 class="text-orange-500">{{ statsData.totalExpenses }}</h2>
-        </p-card>
+
+    <div *ngIf="statsData && statsData.length === 0" class="empty-state">
+        <i class="pi pi-database"></i>
+        <h3>No Data Available</h3>
+        <p>Please wait for the backend to process the first requests.</p>
     </div>
 </div>

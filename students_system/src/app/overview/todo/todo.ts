@@ -37,7 +37,6 @@ import { RouterModule } from '@angular/router';
     ToastModule,
     AvatarModule,
     MenubarModule,
-    Menu,
     RouterModule
   ],
   templateUrl: './todo.html',
