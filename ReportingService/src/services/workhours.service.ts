@@ -21,7 +21,7 @@ export interface WorkhourSummary {
 }
 
 export class WorkhoursService {
-    private baseUrl = process.env.WORKHOURS_SERVICE_URL || 'http://localhost:3002';;
+    private baseUrl = process.env.WORKHOURS_SERVICE_URL || 'http://localhost:3002';
 
     async fetchSummary(userId: string, periodStart: string, periodEnd: string, token?: string): Promise<WorkhourSummary> {
         const url = `${this.baseUrl}/workHours/my`;
