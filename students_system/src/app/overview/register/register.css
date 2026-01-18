@@ -1,0 +1,41 @@
+::ng-deep .register-card {
+    background: linear-gradient(135deg, #7a5f7a 0%, #9d7b9d 25%, #c499c4 75%, #e6d5e6 100%) !important;
+    display: flex;
+    justify-content: center;
+    height: 100vh;
+    align-items: center;
+}
+
+::ng-deep .input#username {
+    width: 100%;
+}
+
+::ng-deep button.p-ripple.p-button.p-component.w-full {
+    margin-top: 10px;
+    border: none;
+    background-color: #7a5f7a;
+    width: 100%;
+}
+
+::ng-deep .auth-group {
+    display: grid;
+    gap: 1rem;
+}
+
+::ng-deep .reset {
+    display: grid;
+    float: right !important;
+    margin-top: 10px;
+}
+
+::ng-deep .reset:hover {
+    color: #7a5f7a;
+}
+
+::ng-deep input:focus {
+    border-color: #7a5f7a !important;
+}
+
+::ng-deep .error-label {
+    margin-left: 10px;
+}

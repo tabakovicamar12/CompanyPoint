@@ -1,0 +1,12 @@
+<div class="grid mb-4" *ngIf="statsData">
+    <div class="col-12 md:col-6 lg:col-4">
+        <p-card header="Total Amount">
+            <h2 class="text-primary">{{ statsData.totalAmount }}</h2>
+        </p-card>
+    </div>
+    <div class="col-12 md:col-6 lg:col-4">
+        <p-card header="Total Count">
+            <h2 class="text-orange-500">{{ statsData.totalExpenses }}</h2>
+        </p-card>
+    </div>
+</div>

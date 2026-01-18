@@ -1,0 +1,99 @@
+<div class="card shadow-2 border-round surface-card w-full">
+    <p-toast></p-toast>
+
+    <div class="flex justify-content-between align-items-center mb-5">
+        <h2 class="m-0 text-primary" style="margin-bottom: 10px !important;">TODO LIST</h2>
+
+        <div class="flex gap-2 align-items-center">
+            <p-select [options]="todoLists" [(ngModel)]="selectedList" optionLabel="title" placeholder="Izberi listu"
+                class="w-15rem">
+            </p-select>
+
+            <p-button label="Todo table" class="button-todo" icon="pi pi-plus"
+                (onClick)="showNewListDialog()"></p-button>
+
+            <p-button label="Delete all tasks" icon="pi pi-trash" [text]="true" severity="danger" class="delete-button"
+                styleClass="mt-3 margin-left-1 border-top-1 border-200 pt-2" (onClick)="deleteAllTasksForEmployee()">
+            </p-button>
+        </div>
+    </div>
+
+    <div class="kanban-board" *ngIf="selectedList">
+        <div class="kanban-column" *ngFor="let status of statuses" pDroppable="tasks" (onDrop)="onDrop(status)">
+            <div class="flex flex-column h-full border-1 border-200 surface-50 border-round p-3 shadow-1"
+                style="min-height: 600px;">
+
+                <div class="flex justify-content-between align-items-center mb-4 kanban-header">
+                    <h4 class="m-0 font-bold uppercase text-700">{{ status }}</h4>
+                    <p-badge [value]="getTasksByStatus(status).length.toString()" severity="info"></p-badge>
+                </div>
+
+                <div class="flex-grow-1 overflow-auto pr-2">
+                    <div *ngFor="let task of getTasksByStatus(status)" pDraggable="tasks"
+                        (onDragStart)="onDragStart(task)" class="mb-3">
+
+                        <p-card [header]="task.title" class="task-card w-full">
+                            <p class="text-600 mb-1 text-sm">{{ task.description }}</p>
+                            <div class="mt-2 text-500 text-xs">
+                                <i class="pi pi-calendar mr-1"></i>
+                                {{ task.dueDate | date:'dd.MM.yyyy' }}
+                            </div>
+                            <ng-template pTemplate="footer">
+                                <div class="flex gap-2 justify-content-end">
+                                    <p-button icon="pi pi-pencil" [text]="true" severity="secondary"
+                                        (onClick)="editTask(task)" [rounded]="true"></p-button>
+                                    <p-button icon="pi pi-trash" [text]="true" severity="danger"
+                                        (onClick)="deleteTask(task.id)" [rounded]="true"></p-button>
+                                </div>
+                            </ng-template>
+                        </p-card>
+                    </div>
+                </div>
+
+                <p-button label="Add task" icon="pi pi-plus" [text]="true"
+                    styleClass="w-full mt-3 border-top-1 border-200 pt-2"
+                    (onClick)="showAddTaskDialog(status)"></p-button>
+            </div>
+        </div>
+    </div>
+
+    <p-dialog [header]="editingTaskId ? 'Edit task' : 'Add new task'" [(visible)]="displayTaskDialog" [modal]="true"
+        [style]="{width: '450px'}" [closeOnEscape]="true">
+        <div class="flex flex-column gap-3">
+            <div class="flex flex-column gap-2">
+                <label for="title">Title *</label>
+                <input pInputText id="title" [(ngModel)]="newTask.title" placeholder="Add title" />
+            </div>
+            <div class="flex flex-column gap-2">
+                <label for="desc">Description</label>
+                <textarea pInputTextarea id="desc" [(ngModel)]="newTask.description" rows="3"
+                    placeholder="Enter description"></textarea>
+            </div>
+            <div class="flex flex-column gap-2">
+                <label for="date">Due date</label>
+                <p-datepicker id="date" [(ngModel)]="newTask.dueDate" [showIcon]="true"
+                    dateFormat="dd.mm.yy"></p-datepicker>
+            </div>
+        </div>
+        <ng-template pTemplate="footer">
+            <p-button label="Close" icon="pi pi-times" [text]="true" (onClick)="displayTaskDialog = false"></p-button>
+            <p-button label="Save" icon="pi pi-check" (onClick)="saveTask()"></p-button>
+        </ng-template>
+    </p-dialog>
+
+    <p-dialog header="Add new TODO list" [(visible)]="displayListDialog" [modal]="true" [style]="{width: '450px'}"
+        [closeOnEscape]="true">
+        <div class="flex flex-column gap-3 mt-2">
+            <div class="flex flex-column gap-2 todo-table">
+                <label for="listTitle">Name of table *</label>
+                <input pInputText id="listTitle" [(ngModel)]="newListTitle" placeholder="Enter name" />
+            </div>
+        </div>
+        <ng-template pTemplate="footer">
+            <p-button label="Close" icon="pi pi-times" [text]="true" (onClick)="displayListDialog = false"></p-button>
+            <p-button label="Create" icon="pi pi-check" (onClick)="saveNewList()"></p-button>
+        </ng-template>
+    </p-dialog>
+</div>
+
+<router-outlet></router-outlet>

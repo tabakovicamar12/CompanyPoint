@@ -1,0 +1,25 @@
+<p-menubar [model]="items" class="menu">
+    <ng-template #start>
+        <div class="flex align-items-center gap-3 px- menu">
+            <p-avatar image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png" shape="circle"
+                size="xlarge">
+            </p-avatar>
+
+            <div class="flex flex-column user-data" style="display: flex; flex-direction: column; gap: 4px;">
+                <span class="font-bold text-900" style="color: white; font-size: 1.1rem;">
+                    {{ userEmail }}
+                </span>
+
+                <span class="text-sm" style="color: rgba(255, 255, 255, 0.7); font-style: italic;">
+                    {{ userRole }}
+                </span>
+            </div>
+        </div>
+    </ng-template>
+
+    <ng-template #end>
+        <p-button class="logout-button" styleClass="white-button" label="Logout" icon="pi pi-sign-out" [text]="true"
+            (onClick)="logout()">
+        </p-button>
+    </ng-template>
+</p-menubar>

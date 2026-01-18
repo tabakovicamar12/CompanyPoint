@@ -1,0 +1,312 @@
+::ng-deep body {
+    background-color: #f0eff0 !important;
+}
+
+p-avatar.avatar.p-avatar.p-avatar-circle.p-avatar-image.p-component {
+    width: 50px !important;
+    height: 50px !important;
+    border: 1px solid white !important;
+}
+
+::ng-deep .menu {
+    background-color: #594859 !important;
+    margin-bottom: 8px !important;
+    gap: 16px !important;
+}
+
+a.p-ripple.flex.items-center.user-content.ng-star-inserted {
+    display: grid !important;
+    gap: 6px !important;
+}
+
+.page-wrapper {
+  padding: 20px;
+  min-height: 100vh;
+}
+
+h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+  font-weight: 600;
+  font-size: 1.8rem;
+}
+
+h3 {
+  color: #34495e;
+  font-weight: 500;
+}
+
+.mb-1 {
+  margin-bottom: 20px;
+}
+
+.mb-4 {
+  margin-bottom: 20px;
+}
+
+.mt-4 {
+  margin-top: 30px;
+}
+
+.gap-2 {
+  gap: 10px;
+}
+
+.gap-4 {
+  gap: 20px;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.align-items-start {
+  align-items: flex-start;
+}
+
+.justify-content-start {
+  justify-content: flex-start;
+}
+
+.justify-content-end {
+  justify-content: flex-end;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.page-wrapper[_ngcontent-ng-c1505771648] {
+    padding: 0rem 0rem 0rem 0rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
+.dialog-field {
+  margin-bottom: 20px;
+}
+
+.dialog-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.dialog-input .p-select {
+  height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+.dialog-input :deep .p-select-trigger {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.dialog-input :deep .p-select-label {
+  line-height: 1.5;
+  padding: 8px 12px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="date"] {
+  height: 38px;
+  padding: 8px 12px 8px 12px;
+  display: flex;
+  align-items: center;
+}
+
+.dialog-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.dialog-content {
+  padding: 20px 0;
+}
+
+.page-wrapper[_ngcontent-ng-c1027095454] {
+    padding: 0rem 2rem 1rem 2rem;
+}
+
+.stat-box {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  border-radius: 8px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.stat-box:nth-child(2) {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+}
+
+.stat-box:nth-child(3) {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+}
+
+.stat-box:nth-child(4) {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  box-shadow: 0 4px 12px rgba(67, 233, 123, 0.3);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.grid-cols-1 {
+  grid-template-columns: 1fr;
+}
+
+.md\:grid-cols-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.md\:w-15rem {
+  width: 15rem;
+}
+
+.text-700 {
+  color: #5a5a5a;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.font-bold {
+  font-weight: 600;
+}
+
+.text-red-500 {
+  color: #ef4444;
+}
+
+.text-green-600 {
+  color: #16a34a;
+}
+
+.text-red-600 {
+  color: #dc2626;
+}
+
+.text-yellow-600 {
+  color: #ca8a04;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.pt-3 {
+  padding-top: 1rem;
+}
+
+.border-top-1 {
+  border-top: 1px solid #ddd;
+}
+
+.surface-border {
+  border-color: #e5e7eb;
+}
+
+.p-datatable-striped :deep tbody > tr:nth-child(odd) {
+  background-color: #f9fafb;
+}
+
+.p-datatable :deep tbody > tr > td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.p-datatable :deep thead > tr > th {
+  padding: 12px;
+  background-color: #f3f4f6;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.p-datatable :deep tbody > tr:hover {
+  background-color: #f0f4f8;
+}
+
+.dialog-input[_ngcontent-ng-c1960730571] {
+    padding: 1px 12px;
+}
+
+@media (max-width: 768px) {
+  .page-wrapper {
+    padding: 10px;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .md\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .md\:w-15rem {
+    width: 100%;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .p-datatable :deep tbody > tr > td {
+    padding: 8px;
+    font-size: 0.9rem;
+  }
+
+  .p-datatable :deep thead > tr > th {
+    padding: 8px;
+    font-size: 0.85rem;
+  }
+}

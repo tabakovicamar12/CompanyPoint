@@ -1,0 +1,19 @@
+.page-wrapper {
+    padding: 1rem 1rem 1rem 1rem;
+}
+
+:host ::ng-deep .p-password,
+:host ::ng-deep .p-password input {
+    width: 100% !important;
+    display: flex;
+}
+
+label {
+    display: block;
+    width: 100%;
+}
+
+.mid-button-report{
+    margin-left: 10px;
+    margin-left: 10px;
+}

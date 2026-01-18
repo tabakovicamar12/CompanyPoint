@@ -1,0 +1,227 @@
+::ng-deep body {
+    background-color: #f0eff0 !important;
+}
+
+.p-dialog-content .p-datepicker,
+.p-dialog-content .p-inputnumber,
+.p-dialog-content .p-inputnumber-input,
+.p-dialog-content .p-inputtext {
+    width: 100% !important;
+}
+
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.field {
+    margin-bottom: 1rem;
+}
+
+.field label {
+    color: #333;
+}
+
+.grid.flex .field {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    margin-bottom: 0 !important;
+    flex: 0 0 auto !important;
+}
+
+.grid.flex .field input,
+.grid.flex .field p-datepicker,
+.grid.flex .field .p-datepicker {
+    width: 100% !important;
+}
+
+.p-datatable-striped {
+    border-radius: 6px;
+}
+
+.p-datatable .p-datatable-thead>tr>th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    padding: 12px;
+    border: 1px solid #dee2e6;
+}
+
+.p-datatable .p-datatable-tbody>tr>td {
+    padding: 12px;
+    border: 1px solid #dee2e6;
+}
+
+.p-datatable .p-datatable-tbody>tr:hover {
+    background-color: #f8f9fa;
+}
+
+.mb-5 {
+    margin-bottom: 3rem;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.flex {
+    display: flex;
+}
+
+.justify-content-between {
+    justify-content: space-between;
+}
+
+.align-items-center {
+    align-items: center;
+}
+
+.w-full {
+    width: 100%;
+}
+
+h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    font-size: 1.75rem;
+}
+
+h3 {
+    color: #333;
+    font-size: 1.25rem;
+}
+
+.header-container {
+    padding: 1rem 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 2rem;
+}
+
+.page-wrapper[_ngcontent-ng-c1505771648] {
+    padding: 0rem 0rem 0rem 0rem;
+}
+
+:host ::v-deep .field {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+}
+
+:host ::v-deep .p-inputnumber,
+:host ::v-deep .p-datepicker,
+:host ::v-deep .p-inputtext {
+    width: 100% !important;
+}
+
+.grid {
+    display: grid;
+}
+
+.grid.flex {
+    display: flex !important;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.justify-content-start {
+    justify-content: flex-start;
+}
+
+.align-items-start {
+    align-items: flex-start;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.mb-1 {
+    margin-bottom: 0.25rem;
+}
+
+.button-report{
+    padding-right: 10px;
+}
+
+.md\:w-15rem {
+    min-width: 15rem;
+    flex: 0 0 15rem;
+}
+
+@media (max-width: 768px) {
+    .md\:w-15rem {
+        flex: 1 1 100%;
+        min-width: auto;
+    }
+}
+
+.dialog-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 0.5rem 0;
+}
+
+.dialog-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.dialog-field label {
+    margin: 0;
+    color: #333;
+    font-weight: 600;
+}
+
+.dialog-input {
+    width: 100% !important;
+}
+
+.dialog-input .p-datepicker,
+.dialog-input .p-inputnumber,
+.dialog-input input {
+    width: 100% !important;
+}
+
+.dialog-textarea {
+    width: 100% !important;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.875rem;
+    resize: none;
+    box-sizing: border-box;
+}
+
+.dialog-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.1);
+}
+
+:host ::ng-deep .custom-dialog .p-dialog-content {
+    padding: 1.5rem 1.25rem;
+}
+
+:host ::ng-deep .custom-dialog .p-dialog-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.p-card-body {
+    margin: 0;
+    padding: 0rem 0rem 0rem 1rem !important;
+}

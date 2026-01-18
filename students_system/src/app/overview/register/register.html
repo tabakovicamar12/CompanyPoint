@@ -1,0 +1,54 @@
+<div class="register-card">
+    <p-card [style]="{ width: '25rem', overflow: 'hidden', padding: '20px' }">
+        <ng-template #title>Register</ng-template>
+        <ng-template #subtitle>Please enter username,email and password</ng-template>
+        <div class="auth-group">
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-envelope"></i>
+                </p-inputgroup-addon>
+                <p-floatlabel>
+                    <input pInputText id="over_label" [(ngModel)]="data.email" (ngModelChange)="checkEmail()" />
+                </p-floatlabel>
+            </p-inputgroup>
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-lock"></i>
+                </p-inputgroup-addon>
+                <p-floatlabel>
+                    <p-password id="password" [(ngModel)]="data.password" [toggleMask]="true"
+                        (ngModelChange)="checkPassword()" feedback="false"></p-password>
+                </p-floatlabel>
+            </p-inputgroup>
+            @if(password_length === false)
+            {
+            <i class="pi pi-times" style="color: red;"><label class="error-label">Password must be at least 8 characters
+                    long.</label></i>
+            }
+
+            @if(password_symbol === false)
+            {
+            <i class="pi pi-times" style="color: red;"><label class="error-label">Password must include uppercase,
+                    lowercase, number, and special
+                    character.</label></i>
+            }
+
+            @if(email_check === false)
+            {
+            <i class="pi pi-times" style="color: red;"><label class="error-label">Invalid email.</label></i>
+            }
+        </div>
+        <ng-template #footer>
+            <div class="flex gap-4 mt-1">
+                <p-button label="Register" [disabled]="checkInput() === true" (onClick)="onRegister()"
+                    class="w-full button-auth" styleClass="w-full" />
+            </div>
+            <div class="reset">
+                <a href="/login">Already have account?</a>
+            </div>
+        </ng-template>
+    </p-card>
+</div>
+
+<p-toast></p-toast>
+

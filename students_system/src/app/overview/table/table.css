@@ -1,0 +1,98 @@
+.header>th {
+    background-color: #594859 !important;
+    padding: 14px !important;
+    text-transform: uppercase;
+    color: white !important;
+    font-weight: semi-bold !important;
+    margin-bottom: 10px;
+    font-size: small;
+    padding: 20px !important;
+}
+
+.header>th:first-child {
+    border-bottom-left-radius: 6px;
+    border-top-left-radius: 6px;
+}
+
+.header>th:last-child {
+    border-bottom-right-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+::ng-deep .icon-sort>.p-icon {
+    color: white !important;
+    width: 12px !important;
+    height: 12px !important;
+}
+
+::ng-deep .p-datatable-thead {
+    margin-bottom: 10px !important;
+}
+
+::ng-deep .content-table {
+    margin-top: 10px !important;
+}
+
+::ng-deep .content-table td {
+    background-color: white !important;
+    border: none !important;
+}
+
+::ng-deep .content-table tr {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+::ng-deep .content-table td:first-child {
+    border-top-left-radius: 6px;
+    border-bottom-left-radius: 6px;
+}
+
+::ng-deep .content-table td:last-child {
+    border-top-right-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+::ng-deep .table table {
+    border-collapse: separate;
+    border-spacing: 0 10px;
+}
+
+::ng-deep .p-datatable-tbody > .expand-row:nth-of-type(2n) > td:first-child{
+    border-radius: 6px;
+}
+
+::ng-deep .p-paginator > .p-ripple {
+    margin-left: auto;
+}
+
+::ng-deep .p-paginator > :not(:first-child) {
+    margin-left: 8px;    
+}
+
+::ng-deep .btn .p-button {
+    margin-right: 10px !important;
+    background-color: #594859 !important;
+    border-color: #594859 !important;
+    color: #fff !important;
+}
+
+::ng-deep .btn:hover .p-button {
+    background-color: #7a5f7a !important;
+    border-color: #7a5f7a !important;
+    color: #fff !important;
+}
+
+::ng-deep .p-checkbox.p-highlight .p-checkbox-icon {
+  background-color: #594859 !important; 
+  border: none;
+}
+
+::ng-deep .p-checkbox .p-checkbox-box {
+    border: 1px solid #594859 !important;       
+    background: transparent;   
+}
+
+::ng-deep .p-checkbox .p-checkbox-box:hover {
+    border: none;       
+    background: transparent;   
+}

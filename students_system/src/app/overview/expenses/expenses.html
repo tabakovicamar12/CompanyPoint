@@ -1,0 +1,211 @@
+<div class="page-wrapper">
+    <div class="work-card">
+        <p-toast></p-toast>
+        <ng-container *ngIf="isUser">
+            <div class="flex mb-1">
+                <h2 class="expenses-header" style="margin-right: 10px;">EXPENSES</h2>
+                <p-button label="Log Expense" icon="pi pi-plus" (onClick)="showAddDialog()"></p-button>
+            </div>
+
+            <p-table [value]="allEmployeesFiltered" [rows]="10" [paginator]="true" responsiveLayout="scroll"
+                [loading]="isLoading" styleClass="p-datatable-striped">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Date</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                        <th style="width: 120px">Actions</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-expense>
+                    <tr>
+                        <td>{{ expense.expense_date | date:'yyyy-MM-dd' }}</td>
+                        <td>{{ expense.category }}</td>
+                        <td>{{ expense.amount | currency:'EUR':'symbol':'1.2-2' }}</td>
+                        <td>{{ expense.description || '-' }}</td>
+                        <td>
+                            <div class="flex gap-2">
+                                <p-button icon="pi pi-pencil" severity="warn" [rounded]="true" [text]="true"
+                                    [title]="'Edit'" (onClick)="editExpense(expense)"></p-button>
+                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                                    [title]="'Delete'" (onClick)="deleteExpense(expense.id)"></p-button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="5" class="text-center p-4">
+                            <p>No expenses logged yet. Start by clicking "Log Expense".</p>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </ng-container>
+
+        <ng-container *ngIf="isAdmin">
+            <p-card>
+                <ng-template pTemplate="header">
+                    <div style="background-color: #f8f9fa;">
+                        <h3 style="padding: 20px;">Employee Expenses</h3>
+                    </div>
+                </ng-template>
+
+                <div class="grid flex flex-wrap gap-4 justify-content-start mb-4">
+
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="empName" class="font-bold text-sm text-700 mb-2">Employee Name</label>
+                        <input id="empName" pInputText [(ngModel)]="selectedEmployeeName"
+                            (input)="applyEmployeeNameFilter()" type="text" class="w-full"
+                            placeholder="Search by name..." />
+                    </div>
+
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="category" class="font-bold text-sm text-700 mb-2">Category</label>
+                        <p-select id="category" [options]="categories" [(ngModel)]="selectedCategory"
+                            optionLabel="label" optionValue="value" placeholder="Select Category"
+                            styleClass="w-full dialog-input" appendTo="body" [showClear]="true">
+                        </p-select>
+                    </div>
+
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="fromDate" class="font-bold text-sm text-700 mb-2">From Date</label>
+                        <p-datepicker id="fromDate" [(ngModel)]="filterFromDate" dateFormat="yy-mm-dd" [showIcon]="true"
+                            styleClass="w-full" inputStyleClass="w-full" placeholder="Select start date">
+                        </p-datepicker>
+                    </div>
+
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="toDate" class="font-bold text-sm text-700 mb-2">To Date</label>
+                        <p-datepicker id="toDate" [(ngModel)]="filterToDate" dateFormat="yy-mm-dd" [showIcon]="true"
+                            styleClass="w-full" inputStyleClass="w-full" placeholder="Select end date">
+                        </p-datepicker>
+                    </div>
+
+                </div>
+
+                <div class="flex gap-2 mb-4" style="margin-top: 10px">
+                    <p-button label="Add Expense" icon="pi pi-plus" (onClick)="showAddDialog()"></p-button>
+                    <p-button label="Apply Filters" icon="pi pi-filter" (onClick)="applyAdminFilters()"></p-button>
+                    <p-button label="Reset" icon="pi pi-refresh" severity="secondary"
+                        (onClick)="resetAdminFilters()"></p-button>
+                    <p-button label="Refresh" icon="pi pi-sync" severity="info"
+                        (onClick)="refreshAdminData()"></p-button>
+                </div>
+
+                <p-table [value]="allEmployeesExpenses" [rows]="15" [paginator]="true" responsiveLayout="scroll"
+                    [loading]="isLoading" styleClass="p-datatable-striped">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Employee Name</th>
+                            <th>Date</th>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th style="width: 100px">Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-expense>
+                        <tr>
+                            <td>{{ expense.employee_id || expense.employeeId || '-' }}</td>
+                            <td>{{ expense.employee_name || expense.employeeName || '-' }}</td>
+                            <td>{{ expense.expense_date | date:'yyyy-MM-dd' }}</td>
+                            <td>{{ expense.category }}</td>
+                            <td>{{ expense.amount | currency:'EUR':'symbol':'1.2-2' }}</td>
+                            <td>{{ expense.description || '-' }}</td>
+                            <td style="display: flex;">
+                                <p-button icon="pi pi-pencil" severity="warn" [rounded]="true" [text]="true"
+                                    [title]="'Edit'" (onClick)="editExpenseAdmin(expense)"></p-button>
+                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                                    [title]="'Delete'"
+                                    (onClick)="deleteEmployeeExpense(expense.id, expense.employee_name)"></p-button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="7" class="text-center p-4">
+                                <p>No expenses found. Try adjusting your filters.</p>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-card>
+        </ng-container>
+
+    </div>
+
+    <p-dialog [(visible)]="displayDialog" [header]="isEdit ? 'Edit Expense' : 'Log Expense'" [modal]="true"
+        [draggable]="false" [resizable]="false" [style]="{width: '450px'}"
+        [breakpoints]="{'960px': '75vw', '640px': '90vw'}" appendTo="body" styleClass="custom-dialog">
+
+        <div class="dialog-content">
+            <div class="dialog-field" *ngIf="isAdmin && !isEdit">
+                <label class="font-bold text-sm text-700">
+                    Employee <span class="text-red-500">*</span>
+                </label>
+                <p-select [options]="employees" [(ngModel)]="currentExpense.employeeId" optionLabel="name"
+                    optionValue="id" placeholder="Select an Employee" [filter]="true" filterBy="name"
+                    styleClass="w-full dialog-input" appendTo="body">
+                </p-select>
+            </div>
+
+            <div class="dialog-field" *ngIf="isAdmin && isEdit">
+                <label class="font-bold text-sm text-700">Editing for Employee</label>
+                <input pInputText [value]="currentExpense.employeeName || currentExpense.employeeId" [disabled]="true"
+                    class="w-full opacity-70" style="background: #f4f4f4;" />
+            </div>
+
+            <div class="dialog-field">
+                <label for="expenseDate" class="font-bold text-sm text-700">
+                    Expense Date <span class="text-red-500">*</span>
+                </label>
+                <p-datepicker id="expenseDate" [(ngModel)]="currentExpense.expenseDate" dateFormat="yy-mm-dd"
+                    [showIcon]="true" appendTo="body" styleClass="dialog-input" inputStyleClass="w-full">
+                </p-datepicker>
+            </div>
+
+            <div class="dialog-field">
+                <label for="category" class="font-bold text-sm text-700">
+                    Category <span class="text-red-500">*</span>
+                </label>
+                <p-select id="category" [options]="categories" [(ngModel)]="currentExpense.category" optionLabel="label"
+                    optionValue="value" placeholder="Select a Category" styleClass="w-full dialog-input"
+                    appendTo="body">
+                </p-select>
+            </div>
+
+            <div class="dialog-field">
+                <label for="amount" class="font-bold text-sm text-700">
+                    Amount <span class="text-red-500">*</span>
+                </label>
+                <p-inputNumber id="amount" [(ngModel)]="currentExpense.amount" mode="currency" currency="EUR"
+                    [minFractionDigits]="2" [min]="0.01" styleClass="dialog-input" inputStyleClass="w-full"
+                    placeholder="e.g., 150.00" [showButtons]="true">
+                </p-inputNumber>
+            </div>
+
+            <div class="dialog-field">
+                <label for="description" class="font-bold text-sm text-700">
+                    Description (Optional)
+                </label>
+                <textarea pInputTextarea id="description" [(ngModel)]="currentExpense.description" rows="4"
+                    class="dialog-textarea" placeholder="Enter expense details...">
+                </textarea>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-end gap-2 pt-3 surface-border">
+                <p-button label="Cancel" icon="pi pi-times" [text]="true" severity="secondary"
+                    (onClick)="hideDialog()"></p-button>
+                <p-button [label]="isEdit ? 'Update' : 'Save'" icon="pi pi-check" (onClick)="saveExpense()"
+                    styleClass="px-4"></p-button>
+            </div>
+        </ng-template>
+    </p-dialog>
+</div>
+
+<router-outlet></router-outlet>

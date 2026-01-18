@@ -1,0 +1,22 @@
+<p-menubar class="menu" [model]="items">
+    <ng-template #start>
+        <div class="flex items-center gap-2">
+            <p-avatar class="avatar" image="https://primefaces.org/cdn/primeng/images/demo/avatar/amyelsner.png"
+                shape="circle" />
+        </div>
+    </ng-template>
+    <ng-template #item let-item let-root="root">
+        <a pRipple class="flex items-center user-content">
+            <span class="user-name" style="color: white;">{{ item.label }}</span>
+            @if(item.badge)
+            {
+            <p-badge [value]="item.badge" style="border-radius: 2px;padding: 14px;background-color: #7e717e;"
+                [styleClass]="!root ? 'ml-auto' : 'ml-2'"></p-badge>
+            }
+        </a>
+    </ng-template>
+    <ng-template #end>
+    </ng-template>
+</p-menubar>
+
+<app-students></app-students>

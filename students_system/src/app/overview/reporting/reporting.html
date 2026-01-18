@@ -1,0 +1,304 @@
+<div class="page-wrapper">
+    <div class="work-card">
+        <p-toast></p-toast>
+
+        <ng-container *ngIf="isUser">
+            <div class="flex align-items-center mb-1">
+                <h2 style="margin-right: 10px;">REPORTS</h2>
+                <p-button label="Generate Report" class="button-report" icon="pi pi-plus" (onClick)="showGenerateDialog()"></p-button>
+                <p-button label="Manual Report" icon="pi pi-file" severity="info" (onClick)="showManualReportDialog()"></p-button>
+            </div>
+
+            <p-table [value]="userReports" [rows]="10" [paginator]="true" responsiveLayout="scroll"
+                [loading]="isLoading" styleClass="p-datatable-striped">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Period Start</th>
+                        <th>Period End</th>
+                        <th>Total Hours</th>
+                        <th>Rate</th>
+                        <th>Total Pay</th>
+                        <th>Source</th>
+                        <th>Status</th>
+                        <th style="width: 120px">Actions</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-report>
+                    <tr>
+                        <td>{{ report.periodStart | date:'yyyy-MM-dd' }}</td>
+                        <td>{{ report.periodEnd | date:'yyyy-MM-dd' }}</td>
+                        <td>{{ report.totalHours || 0 }}</td>
+                        <td>${{ report.hourlyRate || 0 }}</td>
+                        <td>${{ report.totalPay || 0 }}</td>
+                        <td>{{ report.source | uppercase }}</td>
+                        <td>
+                            <p-tag [value]="report.status | uppercase"
+                                [severity]="getStatusSeverity(report.status)">
+                            </p-tag>
+                        </td>
+                        <td>
+                            <div class="flex gap-2">
+                                <p-button icon="pi pi-pencil" severity="warn" [rounded]="true" [text]="true"
+                                    [title]="'Edit'" [disabled]="report.status !== 'draft'"
+                                    (onClick)="editReport(report)"></p-button>
+                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                                    [title]="'Delete'" [disabled]="report.status !== 'draft'"
+                                    (onClick)="deleteReport(report.id, report.periodStart)"></p-button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="8" class="text-center p-4">
+                            <p>No reports generated yet. Create your first report.</p>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </ng-container>
+
+        <ng-container *ngIf="isAdmin">
+            <p-card>
+                <ng-template pTemplate="header">
+                    <div style="background-color: #f8f9fa;">
+                        <h3 style="padding: 20px;">All Reports</h3>
+                    </div>
+                </ng-template>
+
+                <div class="grid flex flex-wrap gap-4 justify-content-start mb-4">
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="empId" class="font-bold text-sm text-700 mb-2">Employee ID</label>
+                        <input id="empId" pInputText [(ngModel)]="selectedEmployeeId" type="text" class="w-full"
+                            placeholder="Search by ID" />
+                    </div>
+
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="status" class="font-bold text-sm text-700 mb-2">Status</label>
+                        <p-select id="status" [options]="statusOptions" [(ngModel)]="selectedStatus" optionLabel="label"
+                            optionValue="value" placeholder="Select Status" styleClass="w-full dialog-input"
+                            appendTo="body">
+                        </p-select>
+                    </div>
+
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="fromDate" class="font-bold text-sm text-700 mb-2">Period Start</label>
+                        <p-datepicker id="fromDate" [(ngModel)]="filterPeriodStart" dateFormat="yy-mm-dd"
+                            [showIcon]="true" styleClass="w-full" inputStyleClass="w-full"
+                            placeholder="Select start date">
+                        </p-datepicker>
+                    </div>
+
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="toDate" class="font-bold text-sm text-700 mb-2">Period End</label>
+                        <p-datepicker id="toDate" [(ngModel)]="filterPeriodEnd" dateFormat="yy-mm-dd" [showIcon]="true"
+                            styleClass="w-full" inputStyleClass="w-full" placeholder="Select end date">
+                        </p-datepicker>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mb-4" style="margin-top: 10px">
+                    <p-button label="Apply Filters" icon="pi pi-filter" (onClick)="applyFilters()"></p-button>
+                    <p-button label="Reset" icon="pi pi-refresh" severity="secondary" (onClick)="resetFilters()"></p-button>
+                    <p-button label="Refresh" icon="pi pi-sync" severity="info" (onClick)="refreshData()"></p-button>
+                    <p-button label="Logs" icon="pi pi-list" severity="secondary" (onClick)="loadLogs()"></p-button>
+                </div>
+
+                <p-table [value]="allReports" [rows]="15" [paginator]="true" responsiveLayout="scroll"
+                    [loading]="isLoading" styleClass="p-datatable-striped">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Employee Name</th>
+                            <th>Period Start</th>
+                            <th>Period End</th>
+                            <th>Total Hours</th>
+                            <th>Rate</th>
+                            <th>Total Pay</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th style="width: 150px">Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-report>
+                        <tr>
+                            <td>{{ report.userId || '-' }}</td>
+                            <td>{{ report.userName || '-' }}</td>
+                            <td>{{ report.periodStart | date:'yyyy-MM-dd' }}</td>
+                            <td>{{ report.periodEnd | date:'yyyy-MM-dd' }}</td>
+                            <td>{{ report.totalHours || 0 }}</td>
+                            <td>${{ report.hourlyRate || 0 }}</td>
+                            <td>${{ report.totalPay || 0 }}</td>
+                            <td>{{ report.source | uppercase }}</td>
+                            <td>
+                                <p-tag [value]="report.status | uppercase"
+                                    [severity]="getStatusSeverity(report.status)">
+                                </p-tag>
+                            </td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <p-button icon="pi pi-check" severity="success" [rounded]="true" [text]="true"
+                                        [title]="'Approve'" [disabled]="report.status !== 'draft'"
+                                        (onClick)="updateReportStatus(report.id, 'approved')"></p-button>
+                                    <p-button icon="pi pi-money-bill" severity="info" [rounded]="true" [text]="true"
+                                        [title]="'Mark Paid'" [disabled]="report.status !== 'approved'"
+                                        (onClick)="updateReportStatus(report.id, 'paid')"></p-button>
+                                    <p-button icon="pi pi-pencil" severity="warn" [rounded]="true" [text]="true"
+                                        [title]="'Edit'" [disabled]="report.status !== 'draft'"
+                                        (onClick)="editReport(report)"></p-button>
+                                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                                        [title]="'Delete'" [disabled]="report.status !== 'draft'"
+                                        (onClick)="deleteReport(report.id, report.periodStart)"></p-button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="10" class="text-center p-4">
+                                <p>No reports found. Try adjusting your filters.</p>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-card>
+        </ng-container>
+
+    </div>
+
+    <p-dialog [(visible)]="displayDialog" [header]="isEdit ? 'Edit Report' : (isManualReport ? 'Create Manual Report' : 'Generate Report from Work Hours')" 
+        [modal]="true" [draggable]="false" [resizable]="false" [style]="{width: '450px'}"
+        [breakpoints]="{'960px': '75vw', '640px': '90vw'}" appendTo="body" styleClass="custom-dialog">
+
+        <div class="dialog-content">
+            <div class="dialog-field" *ngIf="isAdmin && !isEdit">
+                <label class="font-bold text-sm text-700">
+                    Employee <span class="text-red-500">*</span>
+                </label>
+                <p-select [options]="employees" [(ngModel)]="currentReport.userId" optionLabel="name"
+                    [optionValue]="'id'" placeholder="Select an Employee" [filter]="true" filterBy="name"
+                    styleClass="w-full dialog-input" appendTo="body">
+                </p-select>
+            </div>
+
+            <div class="dialog-field">
+                <label for="periodStart" class="font-bold text-sm text-700">
+                    Period Start <span class="text-red-500">*</span>
+                </label>
+                <p-datepicker id="periodStart" [(ngModel)]="currentReport.periodStart" dateFormat="yy-mm-dd"
+                    [showIcon]="true" appendTo="body" styleClass="dialog-input" inputStyleClass="w-full">
+                </p-datepicker>
+            </div>
+
+            <div class="dialog-field">
+                <label for="periodEnd" class="font-bold text-sm text-700">
+                    Period End <span class="text-red-500">*</span>
+                </label>
+                <p-datepicker id="periodEnd" [(ngModel)]="currentReport.periodEnd" dateFormat="yy-mm-dd"
+                    [showIcon]="true" appendTo="body" styleClass="dialog-input" inputStyleClass="w-full">
+                </p-datepicker>
+            </div>
+
+            <div class="dialog-field" *ngIf="isManualReport">
+                <label for="totalHours" class="font-bold text-sm text-700">
+                    Total Hours <span class="text-red-500">*</span>
+                </label>
+                <p-inputNumber id="totalHours" [(ngModel)]="currentReport.totalHours" mode="decimal" 
+                    [minFractionDigits]="1" [min]="0" styleClass="dialog-input" inputStyleClass="w-full"
+                    placeholder="e.g., 40.5" [showButtons]="true">
+                </p-inputNumber>
+            </div>
+
+            <div class="dialog-field">
+                <label for="hourlyRate" class="font-bold text-sm text-700">
+                    Hourly Rate <span class="text-red-500">*</span>
+                </label>
+                <p-inputNumber id="hourlyRate" [(ngModel)]="currentReport.hourlyRate" mode="currency" 
+                    currency="USD" locale="en-US" [minFractionDigits]="2"
+                    [min]="0" styleClass="dialog-input" inputStyleClass="w-full" [showButtons]="true">
+                </p-inputNumber>
+            </div>
+
+            <div class="dialog-field" *ngIf="isManualReport">
+                <label class="font-bold text-sm text-700">
+                    Total Pay
+                </label>
+                <input pInputText [value]="'$' + (currentReport.totalHours * currentReport.hourlyRate | number:'1.2-2')" 
+                    [disabled]="true" class="w-full opacity-70" style="background: #f4f4f4;" />
+            </div>
+
+            <div class="dialog-field">
+                <label for="notes" class="font-bold text-sm text-700">
+                    Notes (Optional)
+                </label>
+                <textarea pInputTextarea id="notes" [(ngModel)]="currentReport.notes" rows="4"
+                    class="dialog-textarea" placeholder="Add any additional notes...">
+                </textarea>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-end gap-2 pt-3 border-top-1 surface-border">
+                <p-button label="Cancel" icon="pi pi-times" [text]="true" severity="secondary"
+                    (onClick)="hideDialog()"></p-button>
+                <p-button [label]="isEdit ? 'Update' : 'Create'" icon="pi pi-check" (onClick)="saveReport()"
+                    styleClass="px-4"></p-button>
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <p-dialog [(visible)]="displayLogsDialog" header="System Logs" [modal]="true" [draggable]="false"
+        [resizable]="false" [style]="{width: '90vw', height: '90vh'}" [breakpoints]="{'960px': '95vw', '640px': '100vw'}"
+        appendTo="body" styleClass="custom-dialog" *ngIf="isAdmin">
+
+        <div class="flex gap-2 mb-4">
+            <p-button label="Sync Logs" icon="pi pi-sync" (onClick)="syncLogs()"></p-button>
+            <p-button label="Clear Logs" icon="pi pi-trash" severity="danger" (onClick)="clearLogs()"></p-button>
+        </div>
+
+        <p-table [value]="allLogs" [rows]="20" [paginator]="true" responsiveLayout="scroll"
+            styleClass="p-datatable-striped">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Type</th>
+                    <th>Service</th>
+                    <th>Method</th>
+                    <th>URL</th>
+                    <th>Status</th>
+                    <th>Message</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-log>
+                <tr>
+                    <td>{{ log.timestamp | date:'yyyy-MM-dd HH:mm:ss' }}</td>
+                    <td>{{ log.logType }}</td>
+                    <td>{{ log.serviceName }}</td>
+                    <td>{{ log.method }}</td>
+                    <td>{{ log.url }}</td>
+                    <td>
+                        <p-tag [value]="log.statusCode"
+                            [severity]="log.statusCode >= 200 && log.statusCode < 300 ? 'success' : (log.statusCode >= 400 ? 'danger' : 'warn')">
+                        </p-tag>
+                    </td>
+                    <td>{{ log.message }}</td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="7" class="text-center p-4">
+                        <p>No logs available.</p>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <ng-template pTemplate="footer">
+            <p-button label="Close" icon="pi pi-times" [text]="true" severity="secondary"
+                (onClick)="hideLogsDialog()"></p-button>
+        </ng-template>
+    </p-dialog>
+
+</div>
+
+<router-outlet></router-outlet>

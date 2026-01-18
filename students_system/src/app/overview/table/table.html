@@ -1,0 +1,280 @@
+@if (data) {
+<p-toolbar class="mb-6 toolbar-custom">
+    <ng-template #start>
+        <p-button label="New" icon="pi pi-plus" class="mr-2 btn" (onClick)="openNew()" />
+        <p-button severity="danger" label="Delete" icon="pi pi-trash" outlined (onClick)="deleteSelectedEmployees()"
+            [disabled]="!selectedEmployees || !selectedEmployees.length" />
+    </ng-template>
+</p-toolbar>
+
+
+<p-table [columns]="columns" dataKey="id" class="table" [value]="data" sortField="ID" [sortOrder]="-1"
+    [tableStyle]="{ 'min-width': '50rem' }" [paginator]="true" [rows]="20" [first]="first"
+    [showCurrentPageReport]="true" [(selection)]="selectedEmployees" [rowHover]="false" [lazy]="true"
+    (onLazyLoad)="loadEmployeeLazy($event)"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries" [rowsPerPageOptions]="[20]"
+    (onPage)="pageChange($event)" editMode="row" [expandedRowKeys]="expandedRows">
+    <ng-template #header>
+        <tr class="header">
+            <th style="width: 3rem">
+                <p-tableHeaderCheckbox />
+            </th>
+            @for (item of columns; track $index) {
+            @if($index !== columns.length - 1) {
+                <th [pSortableColumn]="item.field">
+                    <div class="flex items-center gap-2">
+                        {{ item.header }}
+                        <p-sortIcon [field]="item.header" class="icon-sort" />
+                    </div>
+                </th>
+                }
+            }
+            <th></th>
+        </tr>
+    </ng-template>
+
+    <ng-template #body let-editing="editing" let-data let-ri="rowIndex">
+        <tr [pEditableRow]="data" class="content-table">
+            <td style="width: 3rem">
+                <p-tableCheckbox [value]="data" />
+            </td>
+            <td>
+                <p-cellEditor>
+                    <ng-template #input>
+                        <input pInputText type="text" [(ngModel)]="data.id" />
+                    </ng-template>
+                    <ng-template #output>
+                        {{data.id}}
+                    </ng-template>
+                </p-cellEditor>
+            </td>
+            <td>
+                <p-cellEditor>
+                    <ng-template #input>
+                        <input pInputText type="text" [(ngModel)]="data.firstName" />
+                    </ng-template>
+                    <ng-template #output>
+                        {{data.firstName}}
+                    </ng-template>
+                </p-cellEditor>
+            </td>
+            <td>
+                <p-cellEditor>
+                    <ng-template #input>
+                        <input pInputText type="text" [(ngModel)]="data.lastName" />
+                    </ng-template>
+                    <ng-template #output>
+                        {{data.lastName}}
+                    </ng-template>
+                </p-cellEditor>
+            </td>
+            <td>
+                <p-cellEditor>
+                    <ng-template #input>
+                        <input pInputText type="text" [(ngModel)]="data.email" />
+                    </ng-template>
+                    <ng-template #output>
+                        {{data.email}}
+                    </ng-template>
+                </p-cellEditor>
+            </td>
+            <td>
+                <p-cellEditor>
+                    <ng-template #input>
+                        <input pInputText type="text" [(ngModel)]="data.position" />
+                    </ng-template>
+                    <ng-template #output>
+                        {{data.position}}
+                    </ng-template>
+                </p-cellEditor>
+            </td>
+            <td>
+                <p-cellEditor>
+                    <ng-template #input>
+                        <input pInputText type="text" [(ngModel)]="data.department" />
+                    </ng-template>
+                    <ng-template #output>
+                        {{data.department}}
+                    </ng-template>
+                </p-cellEditor>
+            </td>
+            @if(data.status === 'Active') {
+            <td style="display: flex;justify-content: center;">&#128994;</td>
+            }
+            @else if(data.status === 'Inactive') {
+            <td style="display: flex;justify-content: center;">&#128308;</td>
+            }
+            <td>{{ data.hireDate | date:'medium' }}</td>
+            <td>
+                <div class="flex items-center justify-center gap-2">
+                    <button *ngIf="!editing" pButton pRipple type="button" pInitEditableRow icon="pi pi-pencil"
+                        (click)="onRowEditInit(data)" text rounded severity="secondary"></button>
+                    <button *ngIf="editing" pButton pRipple type="button" pSaveEditableRow icon="pi pi-check"
+                        (click)="onRowEditSave(data)" text rounded severity="secondary"></button>
+                    <button *ngIf="editing" pButton pRipple type="button" pCancelEditableRow icon="pi pi-times"
+                        (click)="onRowEditCancel(data)" text rounded severity="secondary"></button>
+                </div>
+            </td>
+        </tr>
+    </ng-template>
+
+    <!--<ng-template #expandedrow let-data>
+        <tr class="expand-row">
+            <td colspan="7">
+                <div class="p-4">
+                    <h5>Courses for {{ data.first_name }}</h5>
+                    <p-table [value]="data.courses" dataKey="id" editMode="row">
+                        <ng-template #header>
+        <tr class="header">
+            @for (item of expendableColumns; track $index) {
+            <th [pSortableColumn]="item.field">
+                <div class="flex items-center gap-2">
+                    {{ item.header }}
+                    <p-sortIcon [field]="item.header" class="icon-sort" />
+                </div>
+            </th>
+            }
+            <th style="width:12%"></th>
+        </tr>
+    </ng-template>-->
+
+    <!--<ng-template #body let-course let-ri="rowIndex">
+        <tr [pEditableRow]="course">
+            <td>{{ course.id }}</td>
+            <td>
+                <p-cellEditor>
+                    <ng-template #input>
+                        <input pInputText type="text" [(ngModel)]="course.course_name" />
+                    </ng-template>
+                    <ng-template #output>
+                        {{ course.course_name }}
+                    </ng-template>
+                </p-cellEditor>
+            </td>
+            <td>
+                <p-cellEditor>
+                    <ng-template #input>
+                        <input pInputText type="text" [(ngModel)]="course.professor" />
+                    </ng-template>
+                    <ng-template #output>
+                        {{ course.professor }}
+                    </ng-template>
+                </p-cellEditor>
+            </td>
+            <td>
+                <p-cellEditor>
+                    <ng-template #input>
+                        <input pInputText type="text" [(ngModel)]="course.ects" />
+                    </ng-template>
+                    <ng-template #output>
+                        {{ course.ects }}
+                    </ng-template>
+                </p-cellEditor>
+            </td>
+            <td>
+                <div class="flex items-center justify-center gap-2">
+                    @if(edit === false || course.id !== editingCourseId) {
+                    <button pButton pRipple type="button" (click)="onRowEditInit(course)" pInitEditableRow
+                        icon="pi pi-pencil" text rounded severity="secondary"></button>
+                    }
+
+                    @if(edit === true && course.id === editingCourseId) {
+                    <button pButton pRipple type="button" pSaveEditableRow (click)="onRowEditSave(course)"
+                        icon="pi pi-check" text rounded severity="secondary"></button>
+                    }
+
+                    @if(edit === true && course.id === editingCourseId) {
+                    <button pButton pRipple type="button" pCancelEditableRow (click)="onRowEditCancel(course)"
+                        icon="pi pi-times" text rounded severity="secondary"></button>
+                    }
+                </div>
+            </td>
+        </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+        <tr>
+            <td colspan="6">There are no courses for this student yet.</td>
+        </tr>
+    </ng-template>-->
+</p-table>
+<!--</div>
+</td>
+</tr>
+</ng-template>
+
+</p-table>-->
+
+<p-dialog [(visible)]="productDialog" [style]="{ width: '450px' }" header="Student Details" [modal]="true">
+    <ng-template #content>
+        <div class="flex flex-col gap-6">
+            <div class="mb-2">
+                <label for="first_name" class="block font-bold mb-3">First Name</label>
+                <input type="text" pInputText id="first_name" [(ngModel)]="data_add.first_name" required autofocus
+                    fluid />
+                <small class="text-red-500" *ngIf="submitted && !data_add.student_name">Name is required.</small>
+            </div>
+            <div>
+                <label for="email" class="block font-bold mb-3">Last name</label>
+                <input type="text" pInputText id="email" [(ngModel)]="data_add.last_name" required autofocus fluid />
+                <small class="text-red-500" *ngIf="submitted && !data_add.last_name">Last name is required.</small>
+            </div>
+            <div>
+                <label for="email" class="block font-bold mb-3">Email</label>
+                <input type="text" pInputText id="email" [(ngModel)]="data_add.email" required autofocus fluid />
+                <small class="text-red-500" *ngIf="submitted && !data_add.email">Email is required.</small>
+            </div>
+
+            <div>
+                <span class="block font-bold mb-4">Courses</span>
+
+                <p-table [value]="courses" [(selection)]="selectedCourses" dataKey="id"
+                    [style]="{ 'min-width': '100%' }">
+
+                    <ng-template #header>
+                        <tr>
+                            <th style="width: 3rem">
+                                <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                            </th>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Professor</th>
+                            <th>ECTS</th>
+                        </tr>
+                    </ng-template>
+
+                    <ng-template #body let-item>
+                        <tr>
+                            <td>
+                                <p-tableCheckbox [value]="item"></p-tableCheckbox>
+                            </td>
+                            <td>{{ item.id }}</td>
+                            <td>{{ item.course_name }}</td>
+                            <td>{{ item.professor }}</td>
+                            <td>{{ item.ects }}</td>
+                        </tr>
+                    </ng-template>
+
+                </p-table>
+            </div>
+
+            <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-6">
+                    <label for="ects" class="block font-bold mb-3">ECTS</label>
+                    <p-inputnumber id="ects" [(ngModel)]="data_add.ects" fluid />
+                </div>
+            </div>
+        </div>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancel" icon="pi pi-times" text (click)="hideDialog()" />
+        <p-button label="Save" icon="pi pi-check" (click)="saveProduct()" />
+    </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{ width: '450px' }" />
+}
+@else {
+<p-message severity="info" icon="pi pi-send" text="No data" styleClass="h-full" />
+}

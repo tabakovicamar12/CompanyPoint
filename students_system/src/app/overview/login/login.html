@@ -1,0 +1,42 @@
+<div class="login-card">
+    <p-card [style]="{ width: '25rem', overflow: 'hidden', padding: '20px' }">
+        <ng-template #title>Log in</ng-template>
+        <ng-template #subtitle>Please enter email and password</ng-template>
+        <div class="auth-group">
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-user"></i>
+                </p-inputgroup-addon>
+                <p-floatlabel>
+                    <input pInputText id="over_label" [(ngModel)]="data.email" (ngModelChange)="checkEmail()" />
+                </p-floatlabel>
+            </p-inputgroup>
+            <p-inputgroup>
+                <p-inputgroup-addon>
+                    <i class="pi pi-lock"></i>
+                </p-inputgroup-addon>
+                <p-floatlabel>
+                    <p-password id="password" [(ngModel)]="data.password" [toggleMask]="true"
+                        (ngModelChange)="checkPassword()" feedback="false"></p-password>
+                </p-floatlabel>
+            </p-inputgroup>
+            @if(password_length === false)
+            {
+            <i class="pi pi-times" style="color: red;"><label class="error-label">Password cannot be empty.</label></i>
+            }
+
+            @if(check_email === false)
+            {
+            <i class="pi pi-times" style="color: red;"><label class="error-label">Email cannot be empty.</label></i>
+            }
+        </div>
+        <ng-template #footer>
+            <div class="flex gap-4 mt-1">
+                <p-button label="Log in" [disabled]="checkInput() === true" (onClick)="onLogin()"
+                    class="w-full button-auth" styleClass="w-full" />
+            </div>
+        </ng-template>
+    </p-card>
+</div>
+
+<p-toast></p-toast>

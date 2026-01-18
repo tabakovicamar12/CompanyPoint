@@ -1,0 +1,328 @@
+<div class="page-wrapper">
+    <div class="work-card">
+        <p-toast></p-toast>
+
+        <ng-container *ngIf="isUser">
+            <div class="flex align-items-center mb-1">
+                <h2 style="margin-right: 10px;">HOLIDAYS</h2>
+                <p-button label="Request Holiday" icon="pi pi-plus" (onClick)="showAddDialog()"></p-button>
+            </div>
+
+            <p-card class="mb-4" *ngIf="userStats">
+                <ng-template pTemplate="header">
+                    <div style="background-color: #f8f9fa;">
+                        <h3 style="padding: 20px; margin: 0;">Your Holiday Balance</h3>
+                    </div>
+                </ng-template>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="stat-box">
+                        <div class="stat-value">{{ userStats.approved || userStats.approved || 0 }}</div>
+                        <div class="stat-label">Approved</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">{{ userStats.approvedDays
+                            || userStats.approvedDays || 0 }}</div>
+                        <div class="stat-label">Approved Days</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">{{ userStats.pending || userStats.pending || 0 }}</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">{{ userStats.rejected
+                            || userStats.rejected || 0 }}</div>
+                        <div class="stat-label">Rejected</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">{{ userStats.totalRequested
+                            || userStats.totalRequested || 0 }}</div>
+                        <div class="stat-label">Total Requested</div>
+                    </div>
+                </div>
+            </p-card>
+
+            <div class="flex gap-2 mb-4">
+                <p-button label="All" severity="secondary" [text]="userFilterStatus === 'all'"
+                    (onClick)="changeStatusFilter('all')"></p-button>
+                <p-button label="Pending" severity="warn" [text]="userFilterStatus === 'pending'"
+                    (onClick)="changeStatusFilter('pending')"></p-button>
+                <p-button label="Approved" severity="success" [text]="userFilterStatus === 'approved'"
+                    (onClick)="changeStatusFilter('approved')"></p-button>
+                <p-button label="Rejected" severity="danger" [text]="userFilterStatus === 'rejected'"
+                    (onClick)="changeStatusFilter('rejected')"></p-button>
+            </div>
+
+            <p-table [value]="userRequests" [rows]="10" [paginator]="true" responsiveLayout="scroll"
+                [loading]="isLoading" styleClass="p-datatable-striped">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Type</th>
+                        <th>Days</th>
+                        <th>Status</th>
+                        <th>Comment</th>
+                        <th style="width: 120px">Actions</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-request>
+                    <tr>
+                        <td>{{ request.startDate | date:'yyyy-MM-dd' }}</td>
+                        <td>{{ request.endDate | date:'yyyy-MM-dd' }}</td>
+                        <td>{{ request.type }}</td>
+                        <td>{{ request.numberOfDays || 0 }}</td>
+                        <td>
+                            <p-tag [value]="request.status | uppercase"
+                                [severity]="request.status === 'approved' ? 'success' : (request.status === 'rejected' ? 'danger' : 'warn')">
+                            </p-tag>
+                        </td>
+                        <td>{{ request.reason || '-' }}</td>
+                        <td>
+                            <div class="flex gap-2">
+                                <p-button icon="pi pi-pencil" severity="warn" [rounded]="true" [text]="true"
+                                    [title]="'Edit'" [disabled]="request.status !== 'pending'"
+                                    (onClick)="editRequest(request)"></p-button>
+                                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                                    [title]="'Delete'" [disabled]="request.status !== 'pending'"
+                                    (onClick)="deleteRequest(request.id)"></p-button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="7" class="text-center p-4">
+                            <p>No holiday requests found.</p>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </ng-container>
+
+        <ng-container *ngIf="isAdmin">
+            <p-card>
+                <ng-template pTemplate="header">
+                    <div style="background-color: #f8f9fa;">
+                        <h3 style="padding: 20px;">Holiday Requests</h3>
+                    </div>
+                </ng-template>
+
+                <div class="grid flex flex-wrap gap-4 justify-content-start mb-4">
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="empId" class="font-bold text-sm text-700 mb-2">Employee ID</label>
+                        <input id="empId" pInputText [(ngModel)]="selectedEmployeeId" type="text" class="w-full"
+                            placeholder="Search by ID" />
+                    </div>
+
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="status" class="font-bold text-sm text-700 mb-2">Status</label>
+                        <p-select id="status" [options]="statusOptions" [(ngModel)]="selectedStatus" optionLabel="label"
+                            optionValue="value" placeholder="Select Status" styleClass="w-full dialog-input"
+                            appendTo="body">
+                        </p-select>
+                    </div>
+
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="fromDate" class="font-bold text-sm text-700 mb-2">From Date</label>
+                        <p-datepicker id="fromDate" [(ngModel)]="filterStartDate" dateFormat="yy-mm-dd"
+                            [showIcon]="true" styleClass="w-full" inputStyleClass="w-full"
+                            placeholder="Select start date">
+                        </p-datepicker>
+                    </div>
+
+                    <div class="field flex flex-column align-items-start md:w-15rem">
+                        <label for="toDate" class="font-bold text-sm text-700 mb-2">To Date</label>
+                        <p-datepicker id="toDate" [(ngModel)]="filterEndDate" dateFormat="yy-mm-dd" [showIcon]="true"
+                            styleClass="w-full" inputStyleClass="w-full" placeholder="Select end date">
+                        </p-datepicker>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mb-4" style="margin-top: 10px">
+                    <p-button label="Apply Filters" icon="pi pi-filter" (onClick)="applyAdminFilters()"></p-button>
+                    <p-button label="Reset" icon="pi pi-refresh" severity="secondary"
+                        (onClick)="resetAdminFilters()"></p-button>
+                    <p-button label="Refresh" icon="pi pi-sync" severity="info"
+                        (onClick)="refreshAdminData()"></p-button>
+                </div>
+
+                <p-table [value]="allRequests" [rows]="15" [paginator]="true" responsiveLayout="scroll"
+                    [loading]="isLoading" styleClass="p-datatable-striped">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Employee ID</th>
+                            <th>Employee Name</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Type</th>
+                            <th>Days</th>
+                            <th>Status</th>
+                            <th style="width: 150px">Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-request>
+                        <tr>
+                            <td>{{ request.userId || request.employee_id || '-' }}</td>
+                            <td>{{ request.userName || request.employee_name || '-' }}</td>
+                            <td>{{ request.startDate | date:'yyyy-MM-dd' }}</td>
+                            <td>{{ request.endDate | date:'yyyy-MM-dd' }}</td>
+                            <td>{{ request.type }}</td>
+                            <td>{{ request.numberOfDays || 0 }}</td>
+                            <td>
+                                <p-tag [value]="request.status | uppercase"
+                                    [severity]="request.status === 'approved' ? 'success' : (request.status === 'rejected' ? 'danger' : 'warn')">
+                                </p-tag>
+                            </td>
+                            <td>
+                                <div class="flex gap-2">
+                                    <p-button icon="pi pi-check" severity="success" [rounded]="true" [text]="true"
+                                        [title]="'Review'" [disabled]="request.status !== 'pending'"
+                                        (onClick)="openReviewDialog(request)"></p-button>
+                                    <p-button icon="pi pi-chart-bar" severity="info" [rounded]="true" [text]="true"
+                                        [title]="'Stats'"
+                                        (onClick)="loadEmployeeStats(request.userId || request.employee_id)"></p-button>
+                                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                                        [title]="'Delete'"
+                                        (onClick)="deleteRequestAdmin(request.id, request.userName || request.employee_name)"></p-button>
+                                </div>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="8" class="text-center p-4">
+                                <p>No holiday requests found. Try adjusting your filters.</p>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-card>
+
+            <p-card class="mt-4" *ngIf="selectedAdminStats">
+                <ng-template pTemplate="header">
+                    <div style="background-color: #f8f9fa;">
+                        <h3 style="padding: 20px; margin: 0;">Employee Holiday Balance</h3>
+                    </div>
+                </ng-template>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="stat-box">
+                        <div class="stat-value">{{ selectedAdminStats.totalDays || selectedAdminStats.total_days || 0 }}
+                        </div>
+                        <div class="stat-label">Total Days</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">{{ selectedAdminStats.usedDays || selectedAdminStats.used_days || 0 }}
+                        </div>
+                        <div class="stat-label">Used Days</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">{{ selectedAdminStats.remainingDays || selectedAdminStats.remaining_days
+                            || 0 }}</div>
+                        <div class="stat-label">Remaining Days</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">{{ selectedAdminStats.pendingDays || selectedAdminStats.pending_days ||
+                            0 }}</div>
+                        <div class="stat-label">Pending Days</div>
+                    </div>
+                </div>
+            </p-card>
+        </ng-container>
+
+    </div>
+
+    <p-dialog [(visible)]="displayDialog" [header]="isEdit ? 'Edit Holiday Request' : 'Request Holiday'" [modal]="true"
+        [draggable]="false" [resizable]="false" [style]="{width: '450px'}"
+        [breakpoints]="{'960px': '75vw', '640px': '90vw'}" appendTo="body" styleClass="custom-dialog" *ngIf="isUser">
+
+        <div class="dialog-content">
+            <div class="dialog-field">
+                <label for="startDate" class="font-bold text-sm text-700">
+                    Start Date <span class="text-red-500">*</span>
+                </label>
+                <p-datepicker id="startDate" [(ngModel)]="currentRequest.startDate" dateFormat="yy-mm-dd"
+                    [showIcon]="true" appendTo="body" styleClass="dialog-input" inputStyleClass="w-full"
+                    [minDate]="minDate" (onSelect)="onStartDateSelect()"> </p-datepicker>
+            </div>
+
+            <div class="dialog-field">
+                <label for="endDate" class="font-bold text-sm text-700">
+                    End Date <span class="text-red-500">*</span>
+                </label>
+                <p-datepicker id="endDate" [(ngModel)]="currentRequest.endDate" dateFormat="yy-mm-dd" [showIcon]="true"
+                    appendTo="body" styleClass="dialog-input" inputStyleClass="w-full"
+                    [minDate]="minEndDate || minDate"> </p-datepicker>
+            </div>
+
+            <div class="dialog-field">
+                <label for="type" class="font-bold text-sm text-700">
+                    Holiday Type <span class="text-red-500">*</span>
+                </label>
+                <p-select id="type" [options]="requestTypes" [(ngModel)]="currentRequest.type" optionLabel="label"
+                    optionValue="value" placeholder="Select Type" styleClass="w-full dialog-input" appendTo="body">
+                </p-select>
+            </div>
+
+            <div class="dialog-field">
+                <label for="comment" class="font-bold text-sm text-700">
+                    Comment (Optional)
+                </label>
+                <textarea pInputTextarea id="comment" [(ngModel)]="currentRequest.comment" rows="4"
+                    class="dialog-textarea" placeholder="Add any additional comments...">
+                </textarea>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-end gap-2 pt-3 border-top-1 surface-border">
+                <p-button label="Cancel" icon="pi pi-times" [text]="true" severity="secondary"
+                    (onClick)="hideDialog()"></p-button>
+                <p-button [label]="isEdit ? 'Update' : 'Submit'" icon="pi pi-check" (onClick)="saveRequest()"
+                    styleClass="px-4"></p-button>
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <p-dialog [(visible)]="displayReviewDialog" header="Review Holiday Request" [modal]="true" [draggable]="false"
+        [resizable]="false" [style]="{width: '450px'}" [breakpoints]="{'960px': '75vw', '640px': '90vw'}"
+        appendTo="body" styleClass="custom-dialog" *ngIf="isAdmin">
+
+        <div class="dialog-content">
+            <div class="dialog-field">
+                <label class="font-bold text-sm text-700">Employee</label>
+                <input pInputText [value]="reviewRequest.employeeName" [disabled]="true" class="w-full opacity-70"
+                    style="background: #f4f4f4;" />
+            </div>
+
+            <div class="dialog-field">
+                <label for="reviewStatus" class="font-bold text-sm text-700">
+                    Decision <span class="text-red-500">*</span>
+                </label>
+                <p-select id="reviewStatus" [options]="statusOptions" [(ngModel)]="reviewRequest.status"
+                    optionLabel="label" optionValue="value" placeholder="Select Decision"
+                    styleClass="w-full dialog-input" appendTo="body">
+                </p-select>
+            </div>
+
+            <div class="dialog-field">
+                <label for="adminComment" class="font-bold text-sm text-700">
+                    Admin Comment
+                </label>
+                <textarea pInputTextarea id="adminComment" [(ngModel)]="reviewRequest.adminComment" rows="4"
+                    class="dialog-textarea" placeholder="Add your review comments...">
+                </textarea>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-end gap-2 pt-3 border-top-1 surface-border">
+                <p-button label="Cancel" icon="pi pi-times" [text]="true" severity="secondary"
+                    (onClick)="hideReviewDialog()"></p-button>
+                <p-button label="Submit Review" icon="pi pi-check" (onClick)="submitReview()"
+                    styleClass="px-4"></p-button>
+            </div>
+        </ng-template>
+    </p-dialog>
+</div>
+
+<router-outlet></router-outlet>

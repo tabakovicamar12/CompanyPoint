@@ -1,0 +1,43 @@
+p-avatar.avatar.p-avatar.p-avatar-circle.p-avatar-image.p-component {
+    width: 50px !important;
+    height: 50px !important;
+    border: 1px solid white !important;
+}
+
+::ng-deep .white-button .p-button-label,
+::ng-deep .white-button .p-button-icon {
+    color: white !important;
+}
+
+::ng-deep .p-menubar-item-content:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+::ng-deep .p-menubar-item-label {
+    color: white !important;
+}
+
+::ng-deep .white-button:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+::ng-deep .menu {
+    display: flex;
+    align-items: center;
+    background-color: #594859 !important;
+    margin-bottom: 8px !important;
+    gap: 16px !important;
+}
+
+::ng-deep .p-menubar-start {
+    margin-right: 3rem;
+}
+
+::ng-deep .user-data {
+    display: flex !important;
+}
+
+a.p-ripple.flex.items-center.user-content.ng-star-inserted {
+    display: grid !important;
+    gap: 6px !important;
+}
