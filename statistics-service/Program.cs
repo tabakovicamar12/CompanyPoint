@@ -112,6 +112,6 @@ using (var scope = app.Services.CreateScope())
         }
     }
 }
-
+app.UseCors("AllowLocalhost4200");
 app.MapControllers();
 app.Run();
