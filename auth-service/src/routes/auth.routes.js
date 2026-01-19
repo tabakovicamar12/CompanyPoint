@@ -111,12 +111,8 @@ router.put('/updatePassword', authController.updatePassword);
 /**
  * @swagger
  * /authService/getAllUsers:
- * get:
- * description: Pridobi vse uporabnike
- * description: Ta pot je samo za admine
- * responses:
- * 200:
- * description: Uspešno
+ *  get:
+ *    description: Pridobi vse uporabnike
  */
 router.get('/getAllUsers', authController.getAllUsers);
 
@@ -153,16 +149,14 @@ router.put('/setRole/:userId', authController.setRole);
 /**
  * @swagger
  * /getUserData:
- * get:
- * summary: Pridobi podatke o prijavljenem uporabniku
- * tags: [AuthService]
- * security:
- * - bearerAuth: []
- * responses:
- * 200:
- * description: Podatki o uporabniku uspešno pridobljeni
- * 401:
- * description: Neveljaven žeton
+ *  get:
+ *    summary: Pridobi podatke o prijavljenem uporabniku
+ *    tags: [AuthService]
+ *    security:
+ *      - bearerAuth: []
+ *    responses:
+ *      200:
+ *        description: Uspešno pridobljeni podatki
  */
 router.get('/getUserData', authController.getUserData);
 
